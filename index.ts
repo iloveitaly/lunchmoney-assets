@@ -3,10 +3,8 @@ import puppeteer from "puppeteer-extra";
 
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import PluginREPL from "puppeteer-extra-plugin-repl";
-import { LunchMoney, Asset } from "lunch-money";
+import { LunchMoney } from "lunch-money";
 import dotenv from "dotenv";
-import repl from "repl";
-import { convertToObject, updateTypeAssertion } from "typescript";
 
 puppeteer.use(StealthPlugin());
 puppeteer.use(PluginREPL());
@@ -15,6 +13,7 @@ async function getBrowser() {
   return await puppeteer.launch({
     headless: true,
 
+    // TODO this was for trying to debug puppeteer on raspberry pi
     // dumpio: false,
     // executablePath: '/usr/bin/chromium',
     // ignoreHTTPSErrors: true,
@@ -27,22 +26,13 @@ async function getBrowser() {
   });
 }
 
-async function getXPathFromPage(browserReference, pageURL, xpath) {
-  const page = await browserReference.newPage();
-  // await page.setDefaultNavigationTimeout(60000);
-  await page.goto(pageURL, { timeout: 0 });
-  // await page.repl();
-  // await p.evaluate((e) => e.textContent, (await p.$x("//object/@data"))[0])
-  return await page.$x(xpath);
-}
-
-async function extractTextContent(page, element) {
-  return await page.evaluate((e) => e.textContent, element[0]);
-}
-
 // NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
-//      this function works around this limitation
-async function extractTextFromXPath(browser, pageURL, xpath) {
+//      this function works around this limitation and extracts the string value from a xpath
+async function extractTextFromXPath(
+  browser: any,
+  pageURL: string,
+  xpath: string
+) {
   const page = await browser.newPage();
   await page.goto(pageURL, { timeout: 0 });
 
@@ -57,7 +47,7 @@ async function extractTextFromXPath(browser, pageURL, xpath) {
 
   try {
     textValue = await page.evaluate(
-      (xpath) =>
+      (xpath: string) =>
         document.evaluate(
           xpath,
           document,
@@ -79,7 +69,7 @@ async function extractTextFromXPath(browser, pageURL, xpath) {
   return textValue;
 }
 
-async function updateAssetPrice(assetId, price) {
+async function updateAssetPrice(assetId: number, price: number) {
   console.log(`updating ${assetId} to price: ${price}`);
 
   const result = await lunchMoney.updateAsset({
@@ -108,11 +98,11 @@ if (!process.env.LUNCH_MONEY_API_KEY) {
 }
 
 const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
+const browser = await getBrowser();
 
 const assets: { [key: string]: { url: string; redfin?: string } } =
   readJSON("./assets.json");
 
-const browser = await getBrowser();
 for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
   if (assetMetadata.url.includes("kbb.com")) {
     // the price data is hidden within a text element of a loaded SVG image
@@ -137,7 +127,7 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
     );
 
     await updateAssetPrice(
-      lunchMoneyAssetId,
+      parseInt(lunchMoneyAssetId),
       parseCurrencyStringToFloat(kbbPrice)
     );
   } else if (assetMetadata.url.includes("zillow.com")) {
@@ -168,7 +158,7 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
       homeValue = parseCurrencyStringToFloat(zillowHomeValue);
     }
 
-    await updateAssetPrice(lunchMoneyAssetId, homeValue);
+    await updateAssetPrice(parseInt(lunchMoneyAssetId), homeValue);
   } else {
     console.error("unsupported asset type");
   }

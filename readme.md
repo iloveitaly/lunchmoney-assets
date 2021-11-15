@@ -10,7 +10,7 @@ Why build this tool rather than the existing scripts out there?
 
 ## Usage
 
-I wrote this using node 17, but I imagine it will work with much older versions. Use `asdf install` to setup node if you haven't already.
+I wrote this using node 17, but I imagine it will work with much older versions. Use `asdf install` to setup node if you haven't already.****
 
 ```shell
 cp .env-example .env
