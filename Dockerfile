@@ -1,3 +1,5 @@
+# TODO this was meant for the pi installation, but I wasn't able to get it working
+
 # Usage:
 #   docker build -t lunchmoney-assets .
 #   docker run --env-file .env -it lunchmoney-assets

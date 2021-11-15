@@ -1,57 +1,178 @@
-// puppeteer-extra is a drop-in replacement for puppeteer,
-// it augments the installed puppeteer with plugin functionality
-const puppeteer = require('puppeteer-extra')
+import fs from "fs";
+import puppeteer from "puppeteer-extra";
 
-// add stealth plugin and use defaults (all evasion techniques)
-const StealthPlugin = require('puppeteer-extra-plugin-stealth')
-puppeteer.use(StealthPlugin())
-// puppeteer.use(require('puppeteer-extra-plugin-anonymize-ua')())
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import PluginREPL from "puppeteer-extra-plugin-repl";
+import { LunchMoney, Asset } from "lunch-money";
+import dotenv from "dotenv";
+import repl from "repl";
+import { convertToObject, updateTypeAssertion } from "typescript";
 
-// https://sc-consulting.medium.com/puppeteer-on-raspbian-nodejs-3425ccea470e/
-let browser = await puppeteer.launch({
-  headless: false,
-  dumpio: true,
-  // userDataDir: './tmp/puppeteer',
-  // ignoreDefaultArgs: ["--disable-extensions"],
-  // executablePath: '/usr/bin/chromium',
-  // executablePath: '/usr/bin/chromium-browser',
-  // executablePath: '/usr/lib/chromium-browser/chromium-browser-v7',
-  ignoreHTTPSErrors: true,
-  args: [
-    // '--no-sandbox',
-    // '--disable-setuid-sandbox',
-    // '--enable-features=NetworkService',
-    // "--disable-dev-shm-usage",
-    // "--disable-web-security",
-    // "--disable-extensions",
-    // "--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.0 Safari/537.36"
-    // "--disable-gpu"
-  ]
-});
+puppeteer.use(StealthPlugin());
+puppeteer.use(PluginREPL());
 
-// TODO might be this?
-// https://github.com/berstend/puppeteer-extra/issues/451
+async function getBrowser() {
+  return await puppeteer.launch({
+    headless: true,
 
-// puppeteer usage as normal
-  console.log('Running tests..')
-  let page = await browser.newPage()
-  await page.setBypassCSP(true)
-  // page._client.send('Network.setBypassServiceWorker', {bypass: true})
-  // https://github.com/berstend/puppeteer-extra/issues/588
-  await page.goto('https://www.kbb.com/honda/odyssey/2016/ex-l-minivan-4d/?condition=good&intent=trade-in-sell&mileage=31000&modalview=false&options=6763005%7ctrue&pricetype=trade-in&vehicleid=411855', {timeout:0})
-  debugger
+    // dumpio: false,
+    // executablePath: '/usr/bin/chromium',
+    // ignoreHTTPSErrors: true,
 
-  // https://stackoverflow.com/questions/52163547/node-js-puppeteer-how-to-set-navigation-timeout
-  await page.setDefaultNavigationTimeout(60000);
-  // await page.goto('https://www.kbb.com/bmw/5-series/2018/540i-xdrive-sedan-4d/?vehicleid=431625&intent=trade-in-sell&mileage=100&pricetype=private-party&condition=verygood&options=8121036|true')
-  // await page.waitForTimeout(10000)
-  debugger;
+    args: [
+      // '--no-sandbox',
+      // '--disable-setuid-sandbox',
+      // "--disable-dev-shm-usage",
+    ],
+  });
+}
 
-  // car_value_svg_url = browser.find_element_by_tag_name("object").get_attribute("data")
-  // find a html element by tag name object
-  // get the attribute data
+async function getXPathFromPage(browserReference, pageURL, xpath) {
+  const page = await browserReference.newPage();
+  // await page.setDefaultNavigationTimeout(60000);
+  await page.goto(pageURL, { timeout: 0 });
+  // await page.repl();
+  // await p.evaluate((e) => e.textContent, (await p.$x("//object/@data"))[0])
+  return await page.$x(xpath);
+}
 
-  await page.$x("//object")
-  await page.$x("//*[@id='RangeBox']/svg:text[4]/text()")
-  await page.screenshot({ path: '/tmp/headless-test-result.png', fullPage: true })
-  // await browser.close()
+async function extractTextContent(page, element) {
+  return await page.evaluate((e) => e.textContent, element[0]);
+}
+
+// NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
+//      this function works around this limitation
+async function extractTextFromXPath(browser, pageURL, xpath) {
+  const page = await browser.newPage();
+  await page.goto(pageURL, { timeout: 0 });
+
+  try {
+    await page.waitForXPath(xpath);
+  } catch (TimeoutError) {
+    console.log("wait for xpath was not successful");
+  }
+
+  // https://github.com/puppeteer/puppeteer/issues/1838
+  let textValue;
+
+  try {
+    textValue = await page.evaluate(
+      (xpath) =>
+        document.evaluate(
+          xpath,
+          document,
+          null,
+          XPathResult.FIRST_ORDERED_NODE_TYPE
+        ).singleNodeValue.textContent,
+      xpath
+    );
+  } catch (error) {
+    console.log(`Error pulling xpath: ${error}`);
+
+    await page.screenshot({
+      path: `/tmp/xpath-error-${Date.now()}.png`,
+      fullPage: true,
+    });
+  }
+
+  await page.close();
+  return textValue;
+}
+
+async function updateAssetPrice(assetId, price) {
+  console.log(`updating ${assetId} to price: ${price}`);
+
+  const result = await lunchMoney.updateAsset({
+    id: assetId,
+    balance: price.toString(),
+  });
+
+  if (result.error) {
+    console.log(`Error updating asset: ${result.error}`);
+  }
+}
+
+function readJSON(path: string) {
+  return JSON.parse(fs.readFileSync(path, "utf8"));
+}
+
+function parseCurrencyStringToFloat(currencyString: string) {
+  return parseFloat(currencyString.replace(/[^0-9.]/g, ""));
+}
+
+dotenv.config();
+
+if (!process.env.LUNCH_MONEY_API_KEY) {
+  console.error("Lunch Money API key not set");
+  process.exit(1);
+}
+
+const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
+
+const assets: { [key: string]: { url: string; redfin?: string } } =
+  readJSON("./assets.json");
+
+const browser = await getBrowser();
+for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
+  if (assetMetadata.url.includes("kbb.com")) {
+    // the price data is hidden within a text element of a loaded SVG image
+    // first extract the SVG path, then pull the text from it
+
+    const svgPath = await extractTextFromXPath(
+      browser,
+      assetMetadata.url,
+      // NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
+      "//object/@data"
+    );
+
+    if (!svgPath) {
+      console.log(`could not find svg path for ${assetMetadata.url}`);
+      continue;
+    }
+
+    const kbbPrice = await extractTextFromXPath(
+      browser,
+      svgPath,
+      "//*[@id='RangeBox']/*[name()='text'][4]"
+    );
+
+    await updateAssetPrice(
+      lunchMoneyAssetId,
+      parseCurrencyStringToFloat(kbbPrice)
+    );
+  } else if (assetMetadata.url.includes("zillow.com")) {
+    let homeValue;
+    const zillowHomeValue = await extractTextFromXPath(
+      browser,
+      assetMetadata.url,
+      '//*[@id="home-details-home-values"]/div/div[1]/div/div/div[1]/div/p/h3'
+    );
+
+    // if redfin link provided, average out the two of them
+    if (assetMetadata.redfin) {
+      const redfinHomeValue = await extractTextFromXPath(
+        browser,
+        assetMetadata.redfin,
+        // NOTE if this changes, just load up a browser, identify the price, and copy the new xpath
+        '//*[@id="content"]/div[12]/div[2]/div[1]/div/div[1]/div/div/div/div[1]/div/div[1]/div/span'
+      );
+
+      console.log(`redfin: ${redfinHomeValue}, zillow: ${zillowHomeValue}`);
+
+      homeValue = Math.round(
+        (parseCurrencyStringToFloat(redfinHomeValue) +
+          parseCurrencyStringToFloat(zillowHomeValue)) /
+          2
+      );
+    } else {
+      homeValue = parseCurrencyStringToFloat(zillowHomeValue);
+    }
+
+    await updateAssetPrice(lunchMoneyAssetId, homeValue);
+  } else {
+    console.error("unsupported asset type");
+  }
+}
+
+await browser.close();
+console.log("assets updated");

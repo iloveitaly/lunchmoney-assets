@@ -6,10 +6,30 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Michael Bianco",
   "license": "MIT",
+  "type": "module",
   "dependencies": {
+    "dotenv": "^10.0.0",
+    "lunch-money": "file:~/Projects/lunchmoney/lunch-money-js",
     "puppeteer-extra-plugin-repl": "^2.3.0",
-    "puppeteer-extra-plugin-stealth": "^2.9.0"
+    "puppeteer-extra-plugin-stealth": "^2.9.0",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/eslint": "^7.28.1",
+    "@types/eslint-plugin-prettier": "^3.1.0",
+    "@types/underscore": "^1.11.3",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "typesync": "^0.8.0"
   }
 }
