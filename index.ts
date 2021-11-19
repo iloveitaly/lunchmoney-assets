@@ -57,12 +57,16 @@ async function extractTextFromXPath(
       xpath
     );
   } catch (error) {
-    console.log(`Error pulling xpath: ${error}`);
+    console.log(
+      `Error pulling xpath (${xpath}) from page (${pageURL}) with error: ${error}`
+    );
 
     await page.screenshot({
       path: `/tmp/xpath-error-${Date.now()}.png`,
       fullPage: true,
     });
+
+    textValue = null;
   }
 
   await page.close();
@@ -111,6 +115,9 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
     const svgPath = await extractTextFromXPath(
       browser,
       assetMetadata.url,
+      // TODO there's a priceAdvisorWrapper div, but the `object` is not always nested within it
+      // "//*[@id='priceAdvisorWrapper']/*/object/@data"
+
       // NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
       "//object/@data"
     );
@@ -126,6 +133,11 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
       "//*[@id='RangeBox']/*[name()='text'][4]"
     );
 
+    if (!kbbPrice) {
+      console.log(`could not find kbb price on svg ${svgPath}`);
+      continue;
+    }
+
     await updateAssetPrice(
       parseInt(lunchMoneyAssetId),
       parseCurrencyStringToFloat(kbbPrice)
@@ -138,6 +150,11 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
       '//*[@id="home-details-home-values"]/div/div[1]/div/div/div[1]/div/p/h3'
     );
 
+    if (!zillowHomeValue) {
+      console.log(`could not find zillow home value for ${assetMetadata.url}`);
+      continue;
+    }
+
     // if redfin link provided, average out the two of them
     if (assetMetadata.redfin) {
       const redfinHomeValue = await extractTextFromXPath(
@@ -147,13 +164,20 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
         '//*[@id="content"]/div[12]/div[2]/div[1]/div/div[1]/div/div/div/div[1]/div/div[1]/div/span'
       );
 
-      console.log(`redfin: ${redfinHomeValue}, zillow: ${zillowHomeValue}`);
+      if (redfinHomeValue) {
+        console.log(`redfin: ${redfinHomeValue}, zillow: ${zillowHomeValue}`);
 
-      homeValue = Math.round(
-        (parseCurrencyStringToFloat(redfinHomeValue) +
-          parseCurrencyStringToFloat(zillowHomeValue)) /
-          2
-      );
+        homeValue = Math.round(
+          (parseCurrencyStringToFloat(redfinHomeValue) +
+            parseCurrencyStringToFloat(zillowHomeValue)) /
+            2
+        );
+      } else {
+        console.log(
+          `could not find redfin home value for ${assetMetadata.redfin}`
+        );
+        homeValue = parseCurrencyStringToFloat(zillowHomeValue);
+      }
     } else {
       homeValue = parseCurrencyStringToFloat(zillowHomeValue);
     }

@@ -9,6 +9,7 @@ puppeteer.use(PluginREPL());
 async function getBrowser() {
     return await puppeteer.launch({
         headless: true,
+        // TODO this was for trying to debug puppeteer on raspberry pi
         // dumpio: false,
         // executablePath: '/usr/bin/chromium',
         // ignoreHTTPSErrors: true,
@@ -19,19 +20,8 @@ async function getBrowser() {
         ],
     });
 }
-async function getXPathFromPage(browserReference, pageURL, xpath) {
-    const page = await browserReference.newPage();
-    // await page.setDefaultNavigationTimeout(60000);
-    await page.goto(pageURL, { timeout: 0 });
-    // await page.repl();
-    // await p.evaluate((e) => e.textContent, (await p.$x("//object/@data"))[0])
-    return await page.$x(xpath);
-}
-async function extractTextContent(page, element) {
-    return await page.evaluate((e) => e.textContent, element[0]);
-}
 // NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
-//      this function works around this limitation
+//      this function works around this limitation and extracts the string value from a xpath
 async function extractTextFromXPath(browser, pageURL, xpath) {
     const page = await browser.newPage();
     await page.goto(pageURL, { timeout: 0 });
@@ -47,11 +37,12 @@ async function extractTextFromXPath(browser, pageURL, xpath) {
         textValue = await page.evaluate((xpath) => document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE).singleNodeValue.textContent, xpath);
     }
     catch (error) {
-        console.log(`Error pulling xpath: ${error}`);
+        console.log(`Error pulling xpath (${xpath}) from page (${pageURL}) with error: ${error}`);
         await page.screenshot({
             path: `/tmp/xpath-error-${Date.now()}.png`,
             fullPage: true,
         });
+        textValue = null;
     }
     await page.close();
     return textValue;
@@ -78,13 +69,15 @@ if (!process.env.LUNCH_MONEY_API_KEY) {
     process.exit(1);
 }
 const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
-const assets = readJSON("./assets.json");
 const browser = await getBrowser();
+const assets = readJSON("./assets.json");
 for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
     if (assetMetadata.url.includes("kbb.com")) {
         // the price data is hidden within a text element of a loaded SVG image
         // first extract the SVG path, then pull the text from it
         const svgPath = await extractTextFromXPath(browser, assetMetadata.url, 
+        // TODO there's a priceAdvisorWrapper div, but the `object` is not always nested within it
+        // "//*[@id='priceAdvisorWrapper']/*/object/@data"
         // NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
         "//object/@data");
         if (!svgPath) {
@@ -92,25 +85,39 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
             continue;
         }
         const kbbPrice = await extractTextFromXPath(browser, svgPath, "//*[@id='RangeBox']/*[name()='text'][4]");
-        await updateAssetPrice(lunchMoneyAssetId, parseCurrencyStringToFloat(kbbPrice));
+        if (!kbbPrice) {
+            console.log(`could not find kbb price on svg ${svgPath}`);
+            continue;
+        }
+        await updateAssetPrice(parseInt(lunchMoneyAssetId), parseCurrencyStringToFloat(kbbPrice));
     }
     else if (assetMetadata.url.includes("zillow.com")) {
         let homeValue;
         const zillowHomeValue = await extractTextFromXPath(browser, assetMetadata.url, '//*[@id="home-details-home-values"]/div/div[1]/div/div/div[1]/div/p/h3');
+        if (!zillowHomeValue) {
+            console.log(`could not find zillow home value for ${assetMetadata.url}`);
+            continue;
+        }
         // if redfin link provided, average out the two of them
         if (assetMetadata.redfin) {
             const redfinHomeValue = await extractTextFromXPath(browser, assetMetadata.redfin, 
             // NOTE if this changes, just load up a browser, identify the price, and copy the new xpath
             '//*[@id="content"]/div[12]/div[2]/div[1]/div/div[1]/div/div/div/div[1]/div/div[1]/div/span');
-            console.log(`redfin: ${redfinHomeValue}, zillow: ${zillowHomeValue}`);
-            homeValue = Math.round((parseCurrencyStringToFloat(redfinHomeValue) +
-                parseCurrencyStringToFloat(zillowHomeValue)) /
-                2);
+            if (redfinHomeValue) {
+                console.log(`redfin: ${redfinHomeValue}, zillow: ${zillowHomeValue}`);
+                homeValue = Math.round((parseCurrencyStringToFloat(redfinHomeValue) +
+                    parseCurrencyStringToFloat(zillowHomeValue)) /
+                    2);
+            }
+            else {
+                console.log(`could not find redfin home value for ${assetMetadata.redfin}`);
+                homeValue = parseCurrencyStringToFloat(zillowHomeValue);
+            }
         }
         else {
             homeValue = parseCurrencyStringToFloat(zillowHomeValue);
         }
-        await updateAssetPrice(lunchMoneyAssetId, homeValue);
+        await updateAssetPrice(parseInt(lunchMoneyAssetId), homeValue);
     }
     else {
         console.error("unsupported asset type");
