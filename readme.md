@@ -43,7 +43,7 @@ Specify the assets to be updated in the `assets.json` file. The key of the hash 
 
 ## Development
 
-```
+```shell
 npx tsc --watch
 ```
 

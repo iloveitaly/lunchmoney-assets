@@ -102,7 +102,7 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
         if (assetMetadata.redfin) {
             const redfinHomeValue = await extractTextFromXPath(browser, assetMetadata.redfin, 
             // NOTE if this changes, just load up a browser, identify the price, and copy the new xpath
-            '//*[@id="content"]/div[12]/div[2]/div[1]/div/div[1]/div/div/div/div[1]/div/div[1]/div/span');
+            '//*[@id="content"]/div[12]/div[2]/div[1]/div/div[1]/div/div[1]/div/div/div/div/div/div[1]/div/span');
             if (redfinHomeValue) {
                 console.log(`redfin: ${redfinHomeValue}, zillow: ${zillowHomeValue}`);
                 homeValue = Math.round((parseCurrencyStringToFloat(redfinHomeValue) +
