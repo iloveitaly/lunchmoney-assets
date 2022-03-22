@@ -34,7 +34,7 @@ async function extractTextFromXPath(browser, pageURL, xpath) {
     // https://github.com/puppeteer/puppeteer/issues/1838
     let textValue;
     try {
-        textValue = await page.evaluate((xpath) => document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE).singleNodeValue.textContent, xpath);
+        textValue = await page.evaluate((xpath) => document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE).singleNodeValue?.textContent, xpath);
     }
     catch (error) {
         console.log(`Error pulling xpath (${xpath}) from page (${pageURL}) with error: ${error}`);
@@ -102,7 +102,7 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
         if (assetMetadata.redfin) {
             const redfinHomeValue = await extractTextFromXPath(browser, assetMetadata.redfin, 
             // NOTE if this changes, just load up a browser, identify the price, and copy the new xpath
-            '//*[@id="content"]/div[12]/div[2]/div[1]/div/div[1]/div/div[1]/div/div/div/div/div/div[1]/div/span');
+            '//*[@data-rf-test-id="abp-price"]/div[@class="statsValue"]');
             if (redfinHomeValue) {
                 console.log(`redfin: ${redfinHomeValue}, zillow: ${zillowHomeValue}`);
                 homeValue = Math.round((parseCurrencyStringToFloat(redfinHomeValue) +
