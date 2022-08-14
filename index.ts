@@ -5,25 +5,31 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import PluginREPL from "puppeteer-extra-plugin-repl";
 import { LunchMoney } from "lunch-money";
 import dotenv from "dotenv";
+import { isPrivateIdentifier } from "typescript";
+import { PuppeteerLaunchOptions } from "puppeteer";
+const isPi = require("detect-rpi");
 
 puppeteer.use(StealthPlugin());
 puppeteer.use(PluginREPL());
 
 async function getBrowser() {
-  return await puppeteer.launch({
+  const puppeteerOpts: PuppeteerLaunchOptions = {
     headless: true,
-
     // TODO this was for trying to debug puppeteer on raspberry pi
     // dumpio: false,
-    // executablePath: '/usr/bin/chromium',
     // ignoreHTTPSErrors: true,
-
     args: [
-      // '--no-sandbox',
       // '--disable-setuid-sandbox',
       // "--disable-dev-shm-usage",
     ],
-  });
+  };
+
+  if (isPi()) {
+    puppeteerOpts.executablePath = "/usr/bin/chromium";
+    puppeteerOpts.args!.push("--no-sandbox");
+  }
+
+  return await puppeteer.launch(puppeteerOpts);
 }
 
 // NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
