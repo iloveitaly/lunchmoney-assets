@@ -7,6 +7,9 @@
 
 FROM node:17.1.0
 
+LABEL maintainer="Michael Bianco <mike@mikebian.co>"
+LABEL org.opencontainers.image.source=https://github.com/iloveitaly/lunchmoney-assets
+
 # clean eliminates the need to manually `rm -rf` the cache
 RUN set -eux; \
   \
@@ -23,6 +26,7 @@ ENV SCHEDULE "0 * * * *"
 
 WORKDIR /app
 COPY . ./
+COPY assets.json ./
 
 # run after copying source to chache the earlier steps
 RUN npm install --no-optional
