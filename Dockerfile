@@ -26,7 +26,10 @@ ENV SCHEDULE "0 * * * *"
 
 WORKDIR /app
 COPY . ./
-COPY assets.json ./
+
+# this is the cleanest way to conditionally copy a file
+# https://stackoverflow.com/a/46801962/129415
+COPY *assets.json ./
 
 # run after copying source to chache the earlier steps
 RUN npm install --no-optional
