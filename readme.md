@@ -41,6 +41,10 @@ Specify the assets to be updated in the `assets.json` file. The key of the hash 
 }
 ```
 
+## Docker Deployment
+
+https://hub.docker.com/r/iloveitaly/lunchmoney-assets
+
 ## Development
 
 ```shell
