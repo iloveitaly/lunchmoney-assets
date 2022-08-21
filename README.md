@@ -45,6 +45,12 @@ Specify the assets to be updated in the `assets.json` file. The key of the hash 
 
 https://hub.docker.com/r/iloveitaly/lunchmoney-assets
 
+Copy your assets config into the container:
+
+```
+docker compose -f docker-compose-pi-hole.yml cp ./lunch-money-assets.json lunchmoney_assets:./app/assets.json
+```
+
 ## Development
 
 ```shell
