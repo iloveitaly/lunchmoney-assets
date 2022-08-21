@@ -7,7 +7,7 @@ import { LunchMoney } from "lunch-money";
 import dotenv from "dotenv";
 import { isPrivateIdentifier } from "typescript";
 import { PuppeteerLaunchOptions } from "puppeteer";
-const isPi = require("detect-rpi");
+import isPi from "detect-rpi";
 
 puppeteer.use(StealthPlugin());
 puppeteer.use(PluginREPL());

@@ -4,7 +4,7 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import PluginREPL from "puppeteer-extra-plugin-repl";
 import { LunchMoney } from "lunch-money";
 import dotenv from "dotenv";
-const isPi = require("detect-rpi");
+import isPi from "detect-rpi";
 puppeteer.use(StealthPlugin());
 puppeteer.use(PluginREPL());
 async function getBrowser() {
