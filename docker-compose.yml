@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  lunchmoney_assets:
+    container_name: lunchmoney_assets
+    image: lunchmoney-assets
+    restart: unless-stopped
+    environment:
+      - SCHEDULE=@monthly
+      - LUNCH_MONEY_API_KEY=key
