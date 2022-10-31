@@ -72,6 +72,7 @@ if (!process.env.LUNCH_MONEY_API_KEY) {
     console.error("Lunch Money API key not set");
     process.exit(1);
 }
+console.log(`Updating price data ${new Date()}`);
 const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
 const browser = await getBrowser();
 const assets = readJSON("./assets.json");

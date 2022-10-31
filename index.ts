@@ -107,6 +107,8 @@ if (!process.env.LUNCH_MONEY_API_KEY) {
   process.exit(1);
 }
 
+console.log(`Updating price data ${new Date()}`);
+
 const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
 const browser = await getBrowser();
 
