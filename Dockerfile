@@ -1,5 +1,3 @@
-# TODO this was meant for the pi installation, but I wasn't able to get it working
-
 # Usage:
 #   docker build -t lunchmoney-assets .
 #   docker run --env-file .env -it lunchmoney-assets
@@ -9,6 +7,12 @@ FROM node:17.1.0
 
 LABEL maintainer="Michael Bianco <mike@mikebian.co>"
 LABEL org.opencontainers.image.source=https://github.com/iloveitaly/lunchmoney-assets
+
+LABEL org.opencontainers.image.authors="Michael Bianco <mike@mikebian.co>" \
+      org.opencontainers.image.source=https://github.com/iloveitaly/lunchmoney-assets \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.title="Track asset values in lunchmoney" \
+      org.opencontainers.image.description="Track asset value (car, home) in lunch money automatically"
 
 # clean eliminates the need to manually `rm -rf` the cache
 RUN set -eux; \
