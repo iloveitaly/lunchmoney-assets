@@ -8,8 +8,16 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    env:
+      DOCKER_USERNAME: iloveitaly
     steps:
       - uses: actions/checkout@v3
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ github.event.repository.name }}
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -20,20 +28,22 @@ jobs:
         name: Login to DockerHub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ env.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Build and push
         uses: docker/build-push-action@v3
         with:
           push: true
-          platforms: linux/arm64
-          tags: iloveitaly/lunchmoney-assets:latest
+          # amd64 supports x86_64
+          platforms: linux/arm64,linux/amd64
+          tags: ${{ github.event.repository.full_name }}:latest
+          labels: ${{ steps.meta.outputs.labels }}
 
       -
         name: Update repo description
         uses: peter-evans/dockerhub-description@v3.0.0
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ env.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           short-description: ${{ github.event.repository.description }}
