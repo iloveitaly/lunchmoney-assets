@@ -4,9 +4,9 @@ Tool to update real estate and car values in [LunchMoney](https://mikebian.co/lu
 
 Why build this tool rather than the existing scripts out there?
 
-* The Kelly Bluebook page structure changed and the existing logic wasn't working for me
-* I wanted a single tool to manage both real estate and cars
-* Wanted a good excuse to play around with puppeteer
+- The Kelly Bluebook page structure changed and the existing logic wasn't working for me
+- I wanted a single tool to manage both real estate and cars
+- Wanted a good excuse to play around with puppeteer
 
 ## Usage
 

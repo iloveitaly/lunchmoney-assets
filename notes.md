@@ -22,9 +22,9 @@ The pi version is:
 
 The pi version of head chrome is: Version 88.0.4324.187 (Official Build) Built on Raspbian , running on Raspbian 10 (32-bit)
 
-* If I open up chromium, I can load the page on a PI
-* Running chromium on a pi via node works, but it causes weird errors
-* The chromium desktop version if older (88)
-* Puppeteer doesn't have a version out to support 88 officially
+- If I open up chromium, I can load the page on a PI
+- Running chromium on a pi via node works, but it causes weird errors
+- The chromium desktop version if older (88)
+- Puppeteer doesn't have a version out to support 88 officially
 
 Even upgrading to chromium 92 didn't fix the issue. There is something specific to chromium being controlled by puppeteer on raspberrypi that it can detect.
