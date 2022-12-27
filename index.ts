@@ -1,4 +1,5 @@
 import fs from "fs";
+import process from "process";
 import puppeteer from "puppeteer-extra";
 
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
@@ -113,7 +114,7 @@ const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
 const browser = await getBrowser();
 
 const assets: { [key: string]: { url: string; redfin?: string } } =
-  readJSON("./assets.json");
+  readJSON(`${process.cwd()}/assets.json`);
 
 for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
   if (assetMetadata.url.includes("kbb.com")) {
