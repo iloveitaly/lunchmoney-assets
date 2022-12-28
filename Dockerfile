@@ -3,7 +3,7 @@
 #   docker run --env-file .env -it lunchmoney-assets
 #   docker run --env-file .env -it lunchmoney-assets bash
 
-FROM node:17.1.0
+FROM node:18.12.1
 
 LABEL maintainer="Michael Bianco <mike@mikebian.co>"
 LABEL org.opencontainers.image.source=https://github.com/iloveitaly/lunchmoney-assets
@@ -15,6 +15,7 @@ LABEL org.opencontainers.image.authors="Michael Bianco <mike@mikebian.co>" \
       org.opencontainers.image.description="Track asset value (car, home) in lunch money automatically"
 
 # clean eliminates the need to manually `rm -rf` the cache
+# trunk-ignore(hadolint/DL3008)
 RUN set -eux; \
   \
   apt-get update; \
@@ -23,7 +24,8 @@ RUN set -eux; \
     nano less \
     chromium chromium-driver \
     cron; \
-  apt-get clean;
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
 
 # run every hour by default, use `SCHEDULE=NONE` to run directly
 ENV SCHEDULE "0 * * * *"
