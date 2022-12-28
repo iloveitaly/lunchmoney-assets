@@ -1,13 +1,12 @@
 import fs from "fs";
 import process from "process";
+import { executablePath, PuppeteerLaunchOptions } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import PluginREPL from "puppeteer-extra-plugin-repl";
 import { LunchMoney } from "lunch-money";
 import dotenv from "dotenv";
-import { isPrivateIdentifier } from "typescript";
-import { PuppeteerLaunchOptions } from "puppeteer";
 import isPi from "detect-rpi";
 
 puppeteer.use(StealthPlugin());
@@ -28,6 +27,8 @@ async function getBrowser() {
   if (isPi()) {
     puppeteerOpts.executablePath = "/usr/bin/chromium";
     puppeteerOpts.args!.push("--no-sandbox");
+  } else {
+    puppeteerOpts.executablePath = executablePath();
   }
 
   return await puppeteer.launch(puppeteerOpts);
@@ -113,8 +114,9 @@ console.log(`Updating price data ${new Date()}`);
 const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
 const browser = await getBrowser();
 
-const assets: { [key: string]: { url: string; redfin?: string } } =
-  readJSON(`${process.cwd()}/assets.json`);
+const assets: { [key: string]: { url: string; redfin?: string } } = readJSON(
+  `${process.cwd()}/assets.json`
+);
 
 for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
   if (assetMetadata.url.includes("kbb.com")) {
