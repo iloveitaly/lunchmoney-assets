@@ -1,4 +1,5 @@
 {
+  "editor.defaultFormatter": "trunk.io",
   "[typescript]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
