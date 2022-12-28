@@ -25,6 +25,7 @@ async function getBrowser() {
         puppeteerOpts.args.push("--no-sandbox");
     }
     else {
+        // https://stackoverflow.com/questions/74251875/puppeteer-error-an-executablepath-or-channel-must-be-specified-for-puppete
         puppeteerOpts.executablePath = executablePath();
     }
     return await puppeteer.launch(puppeteerOpts);
