@@ -59,8 +59,6 @@ npx tsc --watch
 
 ## TODO
 
-- [ ] use npm lunch money API bindings once API updates are merged
 - [ ] throw a user-friendly error if `assets.json` is not defined
-- [ ] Raspberry pi support. I could not get the KBB page to load properly on chromium. [notes](notes.md). Worth trying this again after Chromium on Pi + various packages are updated.
 - [ ] It seems as though the KBB logic only works for private party priced URLs. Not sure why.
 - [ ] Automatically calculate additional mileage based on time passed
