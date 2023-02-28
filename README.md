@@ -23,6 +23,12 @@ npm install
 node dist/index.js
 ```
 
+Or, if you have a docker container setup, you can run it directly:
+
+```shell
+docker exec -i ca32c16fa00e node dist/index.js
+```
+
 ### `assets.json` Structure
 
 Specify the assets to be updated in the `assets.json` file. The key of the hash is the LunchMoney asset ID.
