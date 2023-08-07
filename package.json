@@ -1,7 +1,6 @@
 {
   "name": "lunchmoney-assets",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,6 +8,15 @@
   "author": "Michael Bianco",
   "license": "MIT",
   "type": "module",
+  "description": "Update Real Estate & Car Values in LunchMoney",
+  "keywords": [
+    "personal-finance",
+    "kbb",
+    "lunch-money",
+    "zillow-scraper",
+    "redfin-scraper",
+    "lunchmoney"
+  ],
   "dependencies": {
     "detect-rpi": "^1.4.0",
     "dotenv": "^16.3.1",
