@@ -40,7 +40,7 @@ async function getBrowser() {
 async function extractTextFromXPath(
   browser: any,
   pageURL: string,
-  xpath: string
+  xpath: string,
 ) {
   const page = await browser.newPage();
   await page.goto(pageURL, { timeout: 0 });
@@ -61,13 +61,13 @@ async function extractTextFromXPath(
           xpath,
           document,
           null,
-          XPathResult.FIRST_ORDERED_NODE_TYPE
+          XPathResult.FIRST_ORDERED_NODE_TYPE,
         ).singleNodeValue?.textContent,
-      xpath
+      xpath,
     );
   } catch (error) {
     console.log(
-      `Error pulling xpath (${xpath}) from page (${pageURL}) with error: ${error}`
+      `Error pulling xpath (${xpath}) from page (${pageURL}) with error: ${error}`,
     );
 
     await page.screenshot({
@@ -116,7 +116,7 @@ const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
 const browser = await getBrowser();
 
 const assets: { [key: string]: { url: string; redfin?: string } } = readJSON(
-  `${process.cwd()}/assets.json`
+  `${process.cwd()}/assets.json`,
 );
 
 for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
@@ -131,7 +131,7 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
       // "//*[@id='priceAdvisorWrapper']/*/object/@data"
 
       // NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
-      "//object/@data"
+      "//object/@data",
     );
 
     if (!svgPath) {
@@ -142,7 +142,7 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
     const kbbPrice = await extractTextFromXPath(
       browser,
       svgPath,
-      "//*[@id='RangeBox']/*[name()='text'][4]"
+      "//*[@id='RangeBox']/*[name()='text'][4]",
     );
 
     if (!kbbPrice) {
@@ -152,14 +152,14 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
 
     await updateAssetPrice(
       parseInt(lunchMoneyAssetId),
-      parseCurrencyStringToFloat(kbbPrice)
+      parseCurrencyStringToFloat(kbbPrice),
     );
   } else if (assetMetadata.url.includes("zillow.com")) {
     let homeValue;
     const zillowHomeValue = await extractTextFromXPath(
       browser,
       assetMetadata.url,
-      '//*[@id="home-details-home-values"]/div/div[1]/div/div/div[1]/div/p/h3'
+      '//*[@id="home-details-home-values"]/div/div[1]/div/div/div[1]/div/p/h3',
     );
 
     if (!zillowHomeValue) {
@@ -173,7 +173,7 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
         browser,
         assetMetadata.redfin,
         // NOTE if this changes, just load up a browser, identify the price, and copy the new xpath
-        '//*[@data-rf-test-id="abp-price"]/div[@class="statsValue"]'
+        '//*[@data-rf-test-id="abp-price"]/div[@class="statsValue"]',
       );
 
       if (redfinHomeValue) {
@@ -182,11 +182,11 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
         homeValue = Math.round(
           (parseCurrencyStringToFloat(redfinHomeValue) +
             parseCurrencyStringToFloat(zillowHomeValue)) /
-            2
+            2,
         );
       } else {
         console.log(
-          `could not find redfin home value for ${assetMetadata.redfin}`
+          `could not find redfin home value for ${assetMetadata.redfin}`,
         );
         homeValue = parseCurrencyStringToFloat(zillowHomeValue);
       }

@@ -9,7 +9,7 @@ https://github.com/testimio/root-cause interesting debugging tool
 
 Can't get this running on the Pi:
 
-```
+```text
 [1112/141310.565073:INFO:CONSOLE(4)] "Uncaught (in promise) TypeError: Failed to register a ServiceWorker for scope ('https://www.kbb.com/') with script ('https://www.kbb.com/akam-sw.js'): A bad HTTP response code (403) was received when fetching the script.", source: kbburl (4)
 ```
 
