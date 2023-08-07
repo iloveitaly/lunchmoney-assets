@@ -23,11 +23,12 @@ lint:
     - prettier@3.0.1
     - eslint@8.46.0
     - gitleaks@8.17.0
+  ignore:
+    - linters: [eslint]
+      paths: [dist/**]
 runtimes:
   enabled:
-    - python@3.10.8
-    - go@1.19.5
-    - node@18.12.1
+    - node@19.9.0
 actions:
   disabled:
     - trunk-check-pre-push
