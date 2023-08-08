@@ -6,7 +6,6 @@ import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import PluginREPL from "puppeteer-extra-plugin-repl";
 import { LunchMoney } from "lunch-money";
-import dotenv from "dotenv";
 import isPi from "detect-rpi";
 
 puppeteer.use(StealthPlugin());
@@ -103,8 +102,6 @@ function parseCurrencyStringToFloat(currencyString: string) {
   return parseFloat(currencyString.replace(/[^0-9.]/g, ""));
 }
 
-dotenv.config();
-
 if (!process.env.LUNCH_MONEY_API_KEY) {
   console.error("Lunch Money API key not set");
   process.exit(1);
@@ -115,7 +112,7 @@ console.log(`Updating price data ${new Date()}`);
 const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
 const browser = await getBrowser();
 
-const assets: { [key: string]: { url: string; redfin?: string } } = readJSON(
+const assets: { [key: string]: { url: string; redfin?: string, adjustment?: number } } = readJSON(
   `${process.cwd()}/assets.json`,
 );
 
@@ -139,20 +136,27 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
       continue;
     }
 
-    const kbbPrice = await extractTextFromXPath(
+    const kbbPriceWithCurrency: string = await extractTextFromXPath(
       browser,
       svgPath,
       "//*[@id='RangeBox']/*[name()='text'][4]",
     );
 
-    if (!kbbPrice) {
+    if (!kbbPriceWithCurrency) {
       console.log(`could not find kbb price on svg ${svgPath}`);
       continue;
     }
 
+    let kbbPrice: number = parseCurrencyStringToFloat(kbbPriceWithCurrency)
+
+    if(assetMetadata.adjustment) {
+      console.log(`applying adjustment of ${assetMetadata.adjustment}`)
+      kbbPrice = kbbPrice + assetMetadata.adjustment
+    }
+
     await updateAssetPrice(
       parseInt(lunchMoneyAssetId),
-      parseCurrencyStringToFloat(kbbPrice),
+      kbbPrice,
     );
   } else if (assetMetadata.url.includes("zillow.com")) {
     let homeValue;
