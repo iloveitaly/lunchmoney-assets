@@ -43,6 +43,11 @@ Specify the assets to be updated in the `assets.json` file. The key of the hash 
   "23759": {
     "__comment": "kelly blue book link",
     "url": "https://www.kbb.com/your/car/year/model/?condition=good&intent=trade-in-sell&mileage=100000&modalview=false&options=6763005%7ctrue&pricetype=private-party"
+  },
+  "23759": {
+    "__comment": "a car that is more damaged than it looks",
+    "url": "https://www.kbb.com/your/car/year/model/?condition=good&intent=trade-in-sell&mileage=100000&modalview=false&options=6763005%7ctrue&pricetype=private-party",
+    "adjustment": -500
   }
 }
 ```
@@ -71,8 +76,25 @@ docker run -d --name lunchmoney-assets -e SCHEDULE="0 0 * * *" iloveitaly/lunchm
 
 ## Development
 
+Setup your env (I use [direnv](https://direnv.net)):
+
+```shell
+cp .envrc-example .envrc
+```
+
+Compile typescript:
+
 ```shell
 npx tsc --watch
+```
+
+Get a list of all accounts in your lunchmoney account:
+
+```shell
+http GET https://dev.lunchmoney.app/v1/assets -A bearer -a $LUNCH_MONEY_API_KEY | jqp
+
+# or match against a specific account
+http GET https://dev.lunchmoney.app/v1/assets -A bearer -a $LUNCH_MONEY_API_KEY | jq '.assets | map(select(.name == "Camry"))'
 ```
 
 ## TODO
