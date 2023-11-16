@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@types/eslint": "^8.44.2",
-    "@types/underscore": "^1.11.6",
+    "@types/underscore": "^1.11.14",
     "@typescript-eslint/eslint-plugin": "^6.3.0",
     "@typescript-eslint/parser": "^6.3.0",
     "eslint": "^8.46.0",
