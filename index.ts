@@ -13,7 +13,7 @@ puppeteer.use(PluginREPL());
 
 async function getBrowser() {
   const puppeteerOpts: PuppeteerLaunchOptions = {
-    headless: true,
+    headless: "new",
     // TODO this was for trying to debug puppeteer on raspberry pi
     // dumpio: false,
     // ignoreHTTPSErrors: true,
@@ -112,9 +112,9 @@ console.log(`Updating price data ${new Date()}`);
 const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
 const browser = await getBrowser();
 
-const assets: { [key: string]: { url: string; redfin?: string, adjustment?: number } } = readJSON(
-  `${process.cwd()}/assets.json`,
-);
+const assets: {
+  [key: string]: { url: string; redfin?: string; adjustment?: number };
+} = readJSON(`${process.cwd()}/assets.json`);
 
 for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
   if (assetMetadata.url.includes("kbb.com")) {
@@ -147,17 +147,14 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
       continue;
     }
 
-    let kbbPrice: number = parseCurrencyStringToFloat(kbbPriceWithCurrency)
+    let kbbPrice: number = parseCurrencyStringToFloat(kbbPriceWithCurrency);
 
-    if(assetMetadata.adjustment) {
-      console.log(`applying adjustment of ${assetMetadata.adjustment}`)
-      kbbPrice = kbbPrice + assetMetadata.adjustment
+    if (assetMetadata.adjustment) {
+      console.log(`applying adjustment of ${assetMetadata.adjustment}`);
+      kbbPrice = kbbPrice + assetMetadata.adjustment;
     }
 
-    await updateAssetPrice(
-      parseInt(lunchMoneyAssetId),
-      kbbPrice,
-    );
+    await updateAssetPrice(parseInt(lunchMoneyAssetId), kbbPrice);
   } else if (assetMetadata.url.includes("zillow.com")) {
     let homeValue;
     const zillowHomeValue = await extractTextFromXPath(
