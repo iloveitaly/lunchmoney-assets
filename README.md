@@ -56,6 +56,18 @@ Specify the assets to be updated in the `assets.json` file. The key of the hash 
 
 https://hub.docker.com/r/iloveitaly/lunchmoney-assets
 
+Here's the docker-compose file I use:
+
+```yaml
+lunchmoney_assets:
+  container_name: lunchmoney-assets
+  image: iloveitaly/lunchmoney-assets:latest
+  restart: unless-stopped
+  environment:
+    - SCHEDULE=@monthly
+    - LUNCH_MONEY_API_KEY=THE_KEY
+```
+
 Copy your assets config into the container:
 
 ```shell
