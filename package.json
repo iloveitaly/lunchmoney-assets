@@ -20,7 +20,7 @@
   "dependencies": {
     "detect-rpi": "^1.4.0",
     "lunch-money": "^0.5.0",
-    "puppeteer": "^21.5.2",
+    "puppeteer": "^21.6.1",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-repl": "^2.3.3",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
