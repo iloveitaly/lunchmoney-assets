@@ -24,7 +24,7 @@
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-repl": "^2.3.3",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/eslint": "^8.44.8",
