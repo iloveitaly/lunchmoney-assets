@@ -97,7 +97,7 @@ cp .envrc-example .envrc
 Compile typescript:
 
 ```shell
-npx tsc --watch
+npm run dev
 ```
 
 Get a list of all accounts in your lunchmoney account:

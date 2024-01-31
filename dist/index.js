@@ -10,7 +10,7 @@ puppeteer.use(StealthPlugin());
 puppeteer.use(PluginREPL());
 async function getBrowser() {
     const puppeteerOpts = {
-        headless: true,
+        headless: "new",
         // TODO this was for trying to debug puppeteer on raspberry pi
         // dumpio: false,
         // ignoreHTTPSErrors: true,
