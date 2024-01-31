@@ -112,6 +112,13 @@ console.log(`Updating price data ${new Date()}`);
 const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
 const browser = await getBrowser();
 
+const { ASSET_PATH } = process.env;
+let assetsPath = ASSET_PATH;
+
+if (!assetsPath) {
+  assetsPath = `${process.cwd()}/assets.json`;
+}
+
 const assets: {
   [key: string]: { url: string; redfin?: string; adjustment?: number };
 } = readJSON(`${process.cwd()}/assets.json`);
