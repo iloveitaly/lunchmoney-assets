@@ -13,7 +13,7 @@ puppeteer.use(PluginREPL());
 
 async function getBrowser() {
   const puppeteerOpts: PuppeteerLaunchOptions = {
-    headless: "new",
+    headless: true,
     // TODO this was for trying to debug puppeteer on raspberry pi
     // dumpio: false,
     // ignoreHTTPSErrors: true,
@@ -102,6 +102,80 @@ function parseCurrencyStringToFloat(currencyString: string) {
   return parseFloat(currencyString.replace(/[^0-9.]/g, ""));
 }
 
+interface AssetMetadata {
+  url: string;
+  redfin?: string;
+  adjustment?: number;
+  mileageStart?: number;
+  mileageDate?: string;
+  yearlyMileage?: number;
+}
+
+async function extractKBBPrice(
+  lunchMoneyAssetId: string,
+  assetMetadata: AssetMetadata,
+) {
+  // the price data is hidden within a text element of a loaded SVG image
+  // first extract the SVG path, then pull the text from it
+
+  if (assetMetadata.mileageStart && assetMetadata.mileageDate) {
+    const yearlyMileage: number = assetMetadata.yearlyMileage ?? 12_000;
+    const mileageStart: number = assetMetadata.mileageStart;
+    const mileageDate = new Date(assetMetadata.mileageDate);
+
+    // calculate the current mileage estimate
+    const currentDate = new Date();
+    const timeDiff = currentDate.getTime() - mileageDate.getTime();
+    const daysPassed = timeDiff / (1000 * 60 * 60 * 24);
+    const fractionalYear = daysPassed / 365.25; // accounting for leap years
+    console.log(`Fractional year: ${fractionalYear}`);
+
+    const mileage = Math.round(mileageStart + fractionalYear * yearlyMileage);
+    console.log(`Adjusting mileage: ${mileage}`);
+
+    // now update the `mileage` query string param on the url
+    assetMetadata.url = assetMetadata.url.replace(
+      /mileage=\d+/,
+      `mileage=${mileage}`,
+    );
+  }
+
+  const svgPath = await extractTextFromXPath(
+    browser,
+    assetMetadata.url,
+    // TODO there's a priceAdvisorWrapper div, but the `object` is not always nested within it
+    // "//*[@id='priceAdvisorWrapper']/*/object/@data"
+
+    // NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
+    "//object/@data",
+  );
+
+  if (!svgPath) {
+    console.log(`could not find svg path for ${assetMetadata.url}`);
+    return;
+  }
+
+  const kbbPriceWithCurrency: string = await extractTextFromXPath(
+    browser,
+    svgPath,
+    "//*[@id='RangeBox']/*[name()='text'][4]",
+  );
+
+  if (!kbbPriceWithCurrency) {
+    console.log(`could not find kbb price on svg ${svgPath}`);
+    return;
+  }
+
+  let kbbPrice: number = parseCurrencyStringToFloat(kbbPriceWithCurrency);
+
+  if (assetMetadata.adjustment) {
+    console.log(`applying adjustment of ${assetMetadata.adjustment}`);
+    kbbPrice = kbbPrice + assetMetadata.adjustment;
+  }
+
+  await updateAssetPrice(parseInt(lunchMoneyAssetId), kbbPrice);
+}
+
 if (!process.env.LUNCH_MONEY_API_KEY) {
   console.error("Lunch Money API key not set");
   process.exit(1);
@@ -125,43 +199,7 @@ const assets: {
 
 for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
   if (assetMetadata.url.includes("kbb.com")) {
-    // the price data is hidden within a text element of a loaded SVG image
-    // first extract the SVG path, then pull the text from it
-
-    const svgPath = await extractTextFromXPath(
-      browser,
-      assetMetadata.url,
-      // TODO there's a priceAdvisorWrapper div, but the `object` is not always nested within it
-      // "//*[@id='priceAdvisorWrapper']/*/object/@data"
-
-      // NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
-      "//object/@data",
-    );
-
-    if (!svgPath) {
-      console.log(`could not find svg path for ${assetMetadata.url}`);
-      continue;
-    }
-
-    const kbbPriceWithCurrency: string = await extractTextFromXPath(
-      browser,
-      svgPath,
-      "//*[@id='RangeBox']/*[name()='text'][4]",
-    );
-
-    if (!kbbPriceWithCurrency) {
-      console.log(`could not find kbb price on svg ${svgPath}`);
-      continue;
-    }
-
-    let kbbPrice: number = parseCurrencyStringToFloat(kbbPriceWithCurrency);
-
-    if (assetMetadata.adjustment) {
-      console.log(`applying adjustment of ${assetMetadata.adjustment}`);
-      kbbPrice = kbbPrice + assetMetadata.adjustment;
-    }
-
-    await updateAssetPrice(parseInt(lunchMoneyAssetId), kbbPrice);
+    await extractKBBPrice(lunchMoneyAssetId, assetMetadata);
   } else if (assetMetadata.url.includes("zillow.com")) {
     let homeValue;
     const zillowHomeValue = await extractTextFromXPath(
