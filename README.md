@@ -42,7 +42,10 @@ Specify the assets to be updated in the `assets.json` file. The key of the hash 
   },
   "23759": {
     "__comment": "kelly blue book link",
-    "url": "https://www.kbb.com/your/car/year/model/?condition=good&intent=trade-in-sell&mileage=100000&modalview=false&options=6763005%7ctrue&pricetype=private-party"
+    "url": "https://www.kbb.com/your/car/year/model/?condition=good&intent=trade-in-sell&mileage=100000&modalview=false&options=6763005%7ctrue&pricetype=private-party",
+    "mileageStart": 132800,
+    "mileageDate": "11/29/23",
+    "yearlyMileage": 8000
   },
   "23759": {
     "__comment": "a car that is more damaged than it looks",
@@ -51,6 +54,8 @@ Specify the assets to be updated in the `assets.json` file. The key of the hash 
   }
 }
 ```
+
+Note that mileage can be optionally specified. If it is, the tool will calculate the depreciation based on the mileage and the date of the last update.
 
 ## Docker Deployment
 
