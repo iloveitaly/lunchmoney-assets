@@ -1,0 +1,8 @@
+node_modules
+assets.json
+.env*
+*.js.map
+.git
+.github
+.devcontainer
+.vscode
