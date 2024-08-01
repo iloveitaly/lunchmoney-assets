@@ -37,6 +37,6 @@
     "eslint-config-typescript": "^3.0.0",
     "prettier": "^3.3.2",
     "typescript": "^5.4.2",
-    "typesync": "^0.12.1"
+    "typesync": "^0.13.0"
   }
 }
