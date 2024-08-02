@@ -6,8 +6,6 @@
 FROM node:22.5.1
 
 LABEL maintainer="Michael Bianco <mike@mikebian.co>"
-LABEL org.opencontainers.image.source=https://github.com/iloveitaly/lunchmoney-assets
-
 LABEL org.opencontainers.image.authors="Michael Bianco <mike@mikebian.co>" \
       org.opencontainers.image.source=https://github.com/iloveitaly/lunchmoney-assets \
       org.opencontainers.image.licenses="MIT" \
