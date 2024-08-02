@@ -24,7 +24,7 @@ lint:
     - eslint@8.57.0
     - gitleaks@8.18.4
   ignore:
-    - linters: [eslint]
+    - linters: [eslint, prettier]
       paths: [dist/**]
 runtimes:
   enabled:
