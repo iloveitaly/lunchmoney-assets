@@ -34,12 +34,21 @@ async function getBrowser() {
 async function extractTextFromXPath(browser, pageURL, xpath) {
     const page = await browser.newPage();
     await page.goto(pageURL, { timeout: 0 });
+    // https://stackoverflow.com/questions/48165646/how-can-i-get-an-element-by-xpath/78054219#78054219
+    const xpathSelector = `xpath/${xpath}`;
     try {
-        await page.waitForXPath(xpath);
+        // TODO I don't understand why, but this p-xpath thing isn't working
+        await page.waitForSelector(xpathSelector);
     }
-    catch (TimeoutError) {
-        console.log("wait for xpath was not successful");
+    catch (error) {
+        if (error.constructor.name == "TimeoutError") {
+            console.log("wait for xpath was not successful: ", xpathSelector);
+        }
+        else {
+            throw error;
+        }
     }
+    // even if waiting fails, lets try to grab the content
     // https://github.com/puppeteer/puppeteer/issues/1838
     let textValue;
     try {
@@ -101,8 +110,11 @@ async function extractKBBPrice(lunchMoneyAssetId, assetMetadata) {
     }
     const kbbPriceWithCurrency = await extractTextFromXPath(browser, svgPath, "//*[@id='RangeBox']/*[name()='text'][4]");
     if (!kbbPriceWithCurrency) {
-        console.log(`could not find kbb price on svg ${svgPath}`);
+        console.warn(`could not find kbb price on svg ${svgPath}`);
         return;
+    }
+    else {
+        console.log(`kbb price: ${kbbPriceWithCurrency}`);
     }
     let kbbPrice = parseCurrencyStringToFloat(kbbPriceWithCurrency);
     if (assetMetadata.adjustment) {
@@ -130,11 +142,15 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
     }
     else if (assetMetadata.url.includes("zillow.com")) {
         let homeValue;
-        const zillowHomeValue = await extractTextFromXPath(browser, assetMetadata.url, '//*[@id="home-details-home-values"]/div/div[1]/div/div/div[1]/div/p/h3');
+        const zillowHomeValue = await extractTextFromXPath(browser, assetMetadata.url, 
+        // if this breaks, load up a browser, identify the price, and copy the new xpath
+        // https://www.zillow.com/homedetails/2090-Bedminster-Rd-Perkasie-PA-18944/8943331_zpid/
+        '//*[@id="home-details-home-values"]/div/div[1]/div/div/div[1]/div/p/h3');
         if (!zillowHomeValue) {
             console.log(`could not find zillow home value for ${assetMetadata.url}`);
             continue;
         }
+        console.log(`zillow home value: ${zillowHomeValue}`);
         // if redfin link provided, average out the two of them
         if (assetMetadata.redfin) {
             const redfinHomeValue = await extractTextFromXPath(browser, assetMetadata.redfin, 
@@ -145,6 +161,7 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
                 homeValue = Math.round((parseCurrencyStringToFloat(redfinHomeValue) +
                     parseCurrencyStringToFloat(zillowHomeValue)) /
                     2);
+                console.log(`refind home value: ${homeValue}`);
             }
             else {
                 console.log(`could not find redfin home value for ${assetMetadata.redfin}`);
