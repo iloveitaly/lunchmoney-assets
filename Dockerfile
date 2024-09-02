@@ -3,7 +3,7 @@
 #   docker run --env-file .env -it lunchmoney-assets
 #   docker run --env-file .env -it lunchmoney-assets bash
 
-FROM node:22.5.1
+FROM node:22.7.0
 
 LABEL maintainer="Michael Bianco <mike@mikebian.co>"
 LABEL org.opencontainers.image.authors="Michael Bianco <mike@mikebian.co>" \
