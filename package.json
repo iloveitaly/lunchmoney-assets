@@ -21,7 +21,7 @@
   "dependencies": {
     "detect-rpi": "^1.5.0",
     "lunch-money": "^0.5.0",
-    "puppeteer": "^23.2.1",
+    "puppeteer": "^23.3.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-repl": "^2.3.3",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
@@ -30,13 +30,13 @@
   "devDependencies": {
     "@types/eslint": "^9.6.1",
     "@types/underscore": "^1.11.15",
-    "@typescript-eslint/eslint-plugin": "^8.3.0",
-    "@typescript-eslint/parser": "^8.3.0",
-    "eslint": "^9.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.5.0",
+    "@typescript-eslint/parser": "^8.5.0",
+    "eslint": "^9.10.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-typescript": "^3.0.0",
     "prettier": "^3.3.3",
-    "typescript": "^5.5.4",
+    "typescript": "^5.6.2",
     "typesync": "^0.13.0"
   }
 }
