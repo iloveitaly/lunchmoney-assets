@@ -26,7 +26,7 @@ RUN set -eux; \
   rm -rf /var/lib/apt/lists/*
 
 # run every hour by default, use `SCHEDULE=NONE` to run directly
-ENV SCHEDULE "0 * * * *"
+ENV SCHEDULE="0 * * * *"
 
 WORKDIR /app
 COPY . ./
