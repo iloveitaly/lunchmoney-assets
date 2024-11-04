@@ -11,6 +11,9 @@ puppeteer.use(PluginREPL());
 async function getBrowser() {
     const puppeteerOpts = {
         headless: true,
+        // Increase the protocol timeout to 60 seconds
+        // this fixes timeouts on slow machines (like a raspberry pi)
+        protocolTimeout: 60000,
         // TODO this was for trying to debug puppeteer on raspberry pi
         // dumpio: false,
         // ignoreHTTPSErrors: true,

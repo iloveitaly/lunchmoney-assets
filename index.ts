@@ -55,7 +55,7 @@ async function extractTextFromXPath(
   try {
     // TODO I don't understand why, but this p-xpath thing isn't working
     await page.waitForSelector(xpathSelector);
-  } catch (error) {
+  } catch (error: any) {
     if (error.constructor.name == "TimeoutError") {
       console.log("wait for xpath was not successful: ", xpathSelector);
     } else {
@@ -170,7 +170,7 @@ async function extractKBBPrice(
     return;
   }
 
-  const kbbPriceWithCurrency: string = await extractTextFromXPath(
+  const kbbPriceWithCurrency: string | undefined | null = await extractTextFromXPath(
     browser,
     svgPath,
     "//*[@id='RangeBox']/*[name()='text'][4]",
