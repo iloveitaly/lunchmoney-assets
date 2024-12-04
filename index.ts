@@ -212,7 +212,7 @@ if (!assetsPath) {
 
 const assets: {
   [key: string]: { url: string; redfin?: string; adjustment?: number };
-} = readJSON(`${process.cwd()}/assets.json`);
+} = readJSON(assetsPath);
 
 for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
   if (assetMetadata.url.includes("kbb.com")) {

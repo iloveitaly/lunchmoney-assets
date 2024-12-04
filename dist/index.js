@@ -138,7 +138,7 @@ let assetsPath = ASSET_PATH;
 if (!assetsPath) {
     assetsPath = `${process.cwd()}/assets.json`;
 }
-const assets = readJSON(`${process.cwd()}/assets.json`);
+const assets = readJSON(assetsPath);
 for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
     if (assetMetadata.url.includes("kbb.com")) {
         await extractKBBPrice(lunchMoneyAssetId, assetMetadata);
