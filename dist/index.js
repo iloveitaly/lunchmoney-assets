@@ -22,9 +22,12 @@ async function getBrowser() {
         // "--disable-dev-shm-usage",
         ],
     };
+    // always use no sandbox
+    // should be safe since only 3 known domains are accessed
+    // required for docker and pi deployments and anyone that wants to use as root
+    puppeteerOpts.args.push("--no-sandbox");
     if (isPi()) {
         puppeteerOpts.executablePath = "/usr/bin/chromium";
-        puppeteerOpts.args.push("--no-sandbox");
     }
     else {
         // https://stackoverflow.com/questions/74251875/puppeteer-error-an-executablepath-or-channel-must-be-specified-for-puppete
