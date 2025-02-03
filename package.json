@@ -33,7 +33,7 @@
     "@types/underscore": "^1.13.0",
     "@typescript-eslint/eslint-plugin": "^8.22.0",
     "@typescript-eslint/parser": "^8.19.0",
-    "eslint": "^9.17.0",
+    "eslint": "^9.19.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-config-typescript": "^3.0.0",
     "prettier": "^3.4.2",
