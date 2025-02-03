@@ -31,7 +31,7 @@ docker exec -i ca32c16fa00e node dist/index.js
 
 ### `assets.json` File Path
 
-The program first checks for the environment variable `ASSET_PATH` which should be a string path to the assets.json file to use. For example: `/home/assets.json`. If  the environment variable doesn't exist, it then checks inside the current working directory of the node process. For docker deployments, this is inside the `/app` folder.
+The program first checks for the environment variable `ASSET_PATH` which should be a string path to the assets.json file to use. For example: `/home/assets.json`. If the environment variable doesn't exist, it then checks inside the current working directory of the node process. For docker deployments, this is inside the `/app` folder.
 
 ### `assets.json` Structure
 

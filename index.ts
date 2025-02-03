@@ -1,6 +1,12 @@
 import fs from "fs";
 import process from "process";
-import { Browser, executablePath, PuppeteerLaunchOptions, TimeoutError, PuppeteerError } from "puppeteer";
+import {
+  Browser,
+  executablePath,
+  PuppeteerLaunchOptions,
+  TimeoutError,
+  PuppeteerError,
+} from "puppeteer";
 import puppeteer from "puppeteer-extra";
 
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
@@ -53,7 +59,7 @@ async function extractTextFromXPath(
   await page.goto(pageURL, { timeout: 0 });
 
   // https://stackoverflow.com/questions/48165646/how-can-i-get-an-element-by-xpath/78054219#78054219
-  const xpathSelector = `xpath/${xpath}`
+  const xpathSelector = `xpath/${xpath}`;
 
   try {
     // TODO I don't understand why, but this p-xpath thing isn't working
@@ -62,7 +68,7 @@ async function extractTextFromXPath(
     if (error.constructor.name == "TimeoutError") {
       console.log("wait for xpath was not successful: ", xpathSelector);
     } else {
-      throw error
+      throw error;
     }
   }
 
@@ -173,11 +179,12 @@ async function extractKBBPrice(
     return;
   }
 
-  const kbbPriceWithCurrency: string | undefined | null = await extractTextFromXPath(
-    browser,
-    svgPath,
-    "//*[@id='RangeBox']/*[name()='text'][4]",
-  );
+  const kbbPriceWithCurrency: string | undefined | null =
+    await extractTextFromXPath(
+      browser,
+      svgPath,
+      "//*[@id='RangeBox']/*[name()='text'][4]",
+    );
 
   if (!kbbPriceWithCurrency) {
     console.warn(`could not find kbb price on svg ${svgPath}`);
@@ -267,7 +274,6 @@ for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
     } else {
       homeValue = parseCurrencyStringToFloat(zillowHomeValue);
     }
-
 
     await updateAssetPrice(parseInt(lunchMoneyAssetId), homeValue);
   } else {

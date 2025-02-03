@@ -1,28 +1,28 @@
 version: 0.1
 cli:
-  version: 1.22.2
+  version: 1.22.9
 plugins:
   sources:
     - id: trunk
-      ref: v1.6.1
+      ref: v1.6.7
       uri: https://github.com/trunk-io/plugins
 lint:
   enabled:
-    - checkov@3.2.217
-    - osv-scanner@1.8.2
+    - checkov@3.2.361
+    - osv-scanner@1.9.2
     - terrascan@1.19.1
-    - trivy@0.54.1
-    - trufflehog@3.80.5
+    - trivy@0.59.0
+    - trufflehog@3.88.4
     - yamllint@1.35.1
-    - hadolint@2.12.0
-    - markdownlint@0.41.0
+    - hadolint@2.12.1-beta
+    - markdownlint@0.44.0
     - git-diff-check
     - shfmt@3.6.0
     - shellcheck@0.10.0
-    - actionlint@1.7.1
-    - prettier@3.3.3
+    - actionlint@1.7.7
+    - prettier@3.4.2
     - eslint@8.57.0
-    - gitleaks@8.18.4
+    - gitleaks@8.23.3
   ignore:
     - linters: [eslint, prettier]
       paths: [dist/**]
