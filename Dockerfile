@@ -1,27 +1,27 @@
-# Usage:
-#   docker build -t lunchmoney-assets .
-#   docker run --env-file .env -it lunchmoney-assets
-#   docker run --env-file .env -it lunchmoney-assets bash
-
-FROM node:23.7.0
+FROM oven/bun:latest
 
 LABEL maintainer="Michael Bianco <mike@mikebian.co>"
 LABEL org.opencontainers.image.authors="Michael Bianco <mike@mikebian.co>" \
-      org.opencontainers.image.source=https://github.com/iloveitaly/lunchmoney-assets \
-      org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.title="Track asset values in lunchmoney" \
-      org.opencontainers.image.description="Track asset value (car, home) in lunch money automatically"
+  org.opencontainers.image.source=https://github.com/iloveitaly/lunchmoney-assets \
+  org.opencontainers.image.licenses="MIT" \
+  org.opencontainers.image.title="Track asset values in lunchmoney" \
+  org.opencontainers.image.description="Track asset value (car, home) in lunch money automatically"
+
+
+# absolutely insane, but puppeteer is broken on ARM builds
+# https://github.com/puppeteer/puppeteer/issues/7740
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # clean eliminates the need to manually `rm -rf` the cache
 # trunk-ignore(hadolint/DL3008)
 RUN set -eux; \
   \
-  apt-get update; \
-  apt-get install -y --no-install-recommends \
-    bash \
-    nano less \
-    chromium chromium-driver \
-    cron; \
+  apt update; \
+  apt install -y --no-install-recommends \
+  bash \
+  nano less \
+  chromium chromium-driver; \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
@@ -36,6 +36,6 @@ COPY . ./
 COPY *assets.json ./
 
 # run after copying source to chache the earlier steps
-RUN npm install --no-optional
+RUN bun install --no-optional
 
-CMD ["bash", "cron.sh"]
+CMD ["bun", "cron.ts"]
