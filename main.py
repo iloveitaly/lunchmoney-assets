@@ -1,285 +1,143 @@
-import fs from "fs";
-import process from "process";
-import {
-  Browser,
-  executablePath,
-  PuppeteerLaunchOptions,
-  TimeoutError,
-  PuppeteerError,
-} from "puppeteer";
-import puppeteer from "puppeteer-extra";
+import json
+import os
+import re
+import requests
+from datetime import datetime
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+from camoufox.sync_api import Camoufox
 
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import PluginREPL from "puppeteer-extra-plugin-repl";
-import { LunchMoney } from "lunch-money";
-import isPi from "detect-rpi";
+# Utility Functions
 
-puppeteer.use(StealthPlugin());
-puppeteer.use(PluginREPL());
+def parse_currency_string_to_float(currency_string):
+    """Convert a currency string (e.g., '$12,345.67') to a float."""
+    return float(re.sub(r'[^0-9.]', '', currency_string))
 
-async function getBrowser() {
-  const puppeteerOpts: PuppeteerLaunchOptions = {
-    headless: true,
+def extract_text_from_xpath(browser, url, xpath):
+    """Extract text or attribute value from a webpage using XPath."""
+    page = browser.new_page()
+    page.goto(url, timeout=0)  # No timeout for initial navigation
+    try:
+        page.wait_for_selector(f'xpath={xpath}', timeout=60000)  # Wait up to 60 seconds
+    except PlaywrightTimeoutError:
+        print(f"Wait for XPath was not successful: {xpath}")
+    
+    # Evaluate XPath and return text content or attribute value
+    text_value = page.evaluate(f'''() => {{
+        const result = document.evaluate("{xpath}", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+        const node = result.singleNodeValue;
+        if (node) {{
+            if (node.nodeType === Node.TEXT_NODE) {{
+                return node.textContent;
+            }} else if (node.nodeType === Node.ELEMENT_NODE) {{
+                return node.textContent;
+            }} else if (node.nodeType === Node.ATTRIBUTE_NODE) {{
+                return node.value;
+            }}
+        }}
+        return null;
+    }}''')
+    
+    if not text_value:
+        print(f"Error pulling xpath ({xpath}) from page ({url})")
+        timestamp = int(datetime.now().timestamp())
+        page.screenshot(path=f"/tmp/xpath-error-{timestamp}.png", full_page=True)
+    
+    page.close()
+    return text_value
 
-    // Increase the protocol timeout to 60 seconds
-    // this fixes timeouts on slow machines (like a raspberry pi)
-    protocolTimeout: 60000,
-
-    // TODO this was for trying to debug puppeteer on raspberry pi
-    // dumpio: false,
-    // ignoreHTTPSErrors: true,
-    args: [
-      // '--disable-setuid-sandbox',
-      // "--disable-dev-shm-usage",
-    ],
-  };
-
-  // always use no sandbox
-  // should be safe since only 3 known domains are accessed
-  // required for docker and pi deployments and anyone that wants to use as root
-  puppeteerOpts.args!.push("--no-sandbox");
-  if (isPi()) {
-    puppeteerOpts.executablePath = "/usr/bin/chromium";
-  } else {
-    // https://stackoverflow.com/questions/74251875/puppeteer-error-an-executablepath-or-channel-must-be-specified-for-puppete
-    puppeteerOpts.executablePath = executablePath();
-  }
-
-  return await puppeteer.launch(puppeteerOpts);
-}
-
-// NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
-//      this function works around this limitation and extracts the string value from a xpath
-async function extractTextFromXPath(
-  browser: Browser,
-  pageURL: string,
-  xpath: string,
-) {
-  const page = await browser.newPage();
-  await page.goto(pageURL, { timeout: 0 });
-
-  // https://stackoverflow.com/questions/48165646/how-can-i-get-an-element-by-xpath/78054219#78054219
-  const xpathSelector = `xpath/${xpath}`;
-
-  try {
-    // TODO I don't understand why, but this p-xpath thing isn't working
-    await page.waitForSelector(xpathSelector);
-  } catch (error: any) {
-    if (error.constructor.name == "TimeoutError") {
-      console.log("wait for xpath was not successful: ", xpathSelector);
-    } else {
-      throw error;
+def update_asset_price(asset_id, price):
+    """Update an asset's balance in Lunch Money via API."""
+    print(f"updating {asset_id} to price: {price}")
+    url = f"https://dev.lunchmoney.app/v1/assets/{asset_id}"
+    headers = {
+        "Authorization": f"Bearer {os.environ['LUNCH_MONEY_API_KEY']}",
+        "Content-Type": "application/json"
     }
-  }
+    data = {"balance": str(price)}
+    response = requests.put(url, headers=headers, json=data)
+    if response.status_code != 200:
+        print(f"Error updating asset: {response.json().get('error')}")
 
-  // even if waiting fails, lets try to grab the content
+# Main Logic
 
-  // https://github.com/puppeteer/puppeteer/issues/1838
-  let textValue;
+# Check for API key
+if 'LUNCH_MONEY_API_KEY' not in os.environ:
+    print("Lunch Money API key not set")
+    exit(1)
 
-  try {
-    textValue = await page.evaluate(
-      (xpath: string) =>
-        document.evaluate(
-          xpath,
-          document,
-          null,
-          XPathResult.FIRST_ORDERED_NODE_TYPE,
-        ).singleNodeValue?.textContent,
-      xpath,
-    );
-  } catch (error) {
-    console.log(
-      `Error pulling xpath (${xpath}) from page (${pageURL}) with error: ${error}`,
-    );
+print(f"Updating price data {datetime.now()}")
 
-    await page.screenshot({
-      path: `/tmp/xpath-error-${Date.now()}.png`,
-      fullPage: true,
-    });
+# Load assets from JSON file
+assets_path = os.environ.get('ASSET_PATH', 'assets.json')
+with open(assets_path, 'r') as f:
+    assets = json.load(f)
 
-    textValue = null;
-  }
+# Launch Playwright browser
+with Camoufox() as browser:
+    for lunch_money_asset_id, asset_metadata in assets.items():
+        if 'kbb.com' in asset_metadata['url']:
+            # Handle KBB (car valuation)
+            # Adjust mileage if provided
+            if 'mileageStart' in asset_metadata and 'mileageDate' in asset_metadata:
+                yearly_mileage = asset_metadata.get('yearlyMileage', 12000)
+                mileage_start = asset_metadata['mileageStart']
+                mileage_date = datetime.strptime(asset_metadata['mileageDate'], '%Y-%m-%d')
+                current_date = datetime.now()
+                days_passed = (current_date - mileage_date).days
+                fractional_year = days_passed / 365.25
+                print(f"Fractional year: {fractional_year}")
+                mileage = round(mileage_start + fractional_year * yearly_mileage)
+                print(f"Adjusting mileage: {mileage}")
+                asset_metadata['url'] = re.sub(r'mileage=\d+', f'mileage={mileage}', asset_metadata['url'])
+            
+            # Extract SVG path and price
+            svg_path = extract_text_from_xpath(browser, asset_metadata['url'], "//object/@data")
+            if svg_path:
+                kbb_price_with_currency = extract_text_from_xpath(
+                    browser, svg_path, "//*[@id='RangeBox']/*[name()='text'][4]"
+                )
+                if kbb_price_with_currency:
+                    print(f"kbb price: {kbb_price_with_currency}")
+                    kbb_price = parse_currency_string_to_float(kbb_price_with_currency)
+                    if 'adjustment' in asset_metadata:
+                        print(f"applying adjustment of {asset_metadata['adjustment']}")
+                        kbb_price += asset_metadata['adjustment']
+                    update_asset_price(int(lunch_money_asset_id), kbb_price)
+                else:
+                    print(f"Could not find KBB price on SVG {svg_path}")
+            else:
+                print(f"Could not find SVG path for {asset_metadata['url']}")
+        
+        elif 'zillow.com' in asset_metadata['url']:
+            # Handle Zillow (real estate valuation)
+            zillow_xpath = '//*[@id="home-details-home-values"]/div/div[1]/div/div/div[1]/div/p/h3'
+            zillow_price = extract_text_from_xpath(browser, asset_metadata['url'], zillow_xpath)
+            if not zillow_price:
+                print(f"Could not find Zillow home value for {asset_metadata['url']}")
+                continue
+            print(f"zillow home value: {zillow_price}")
+            zillow_value = parse_currency_string_to_float(zillow_price)
+            
+            # Check for Redfin and average if available
+            if 'redfin' in asset_metadata:
+                redfin_xpath = '//*[@data-rf-test-id="abp-price"]/div[@class="statsValue"]'
+                redfin_price = extract_text_from_xpath(browser, asset_metadata['redfin'], redfin_xpath)
+                if redfin_price:
+                    print(f"redfin: {redfin_price}, zillow: {zillow_price}")
+                    redfin_value = parse_currency_string_to_float(redfin_price)
+                    home_value = round((zillow_value + redfin_value) / 2)
+                    print(f"redfin home value: {home_value}")
+                else:
+                    print(f"Could not find Redfin home value for {asset_metadata['redfin']}")
+                    home_value = zillow_value
+            else:
+                home_value = zillow_value
+            
+            update_asset_price(int(lunch_money_asset_id), home_value)
+        
+        else:
+            print("Unsupported asset type")
+    
+    browser.close()
 
-  await page.close();
-  return textValue;
-}
-
-async function updateAssetPrice(assetId: number, price: number) {
-  console.log(`updating ${assetId} to price: ${price}`);
-
-  const result = await lunchMoney.updateAsset({
-    id: assetId,
-    balance: price.toString(),
-  });
-
-  if (result.error) {
-    console.log(`Error updating asset: ${result.error}`);
-  }
-}
-
-function readJSON(path: string) {
-  return JSON.parse(fs.readFileSync(path, "utf8"));
-}
-
-function parseCurrencyStringToFloat(currencyString: string) {
-  return parseFloat(currencyString.replace(/[^0-9.]/g, ""));
-}
-
-interface AssetMetadata {
-  url: string;
-  redfin?: string;
-  adjustment?: number;
-  mileageStart?: number;
-  mileageDate?: string;
-  yearlyMileage?: number;
-}
-
-async function extractKBBPrice(
-  lunchMoneyAssetId: string,
-  assetMetadata: AssetMetadata,
-) {
-  // the price data is hidden within a text element of a loaded SVG image
-  // first extract the SVG path, then pull the text from it
-
-  if (assetMetadata.mileageStart && assetMetadata.mileageDate) {
-    const yearlyMileage: number = assetMetadata.yearlyMileage ?? 12_000;
-    const mileageStart: number = assetMetadata.mileageStart;
-    const mileageDate = new Date(assetMetadata.mileageDate);
-
-    // calculate the current mileage estimate
-    const currentDate = new Date();
-    const timeDiff = currentDate.getTime() - mileageDate.getTime();
-    const daysPassed = timeDiff / (1000 * 60 * 60 * 24);
-    const fractionalYear = daysPassed / 365.25; // accounting for leap years
-    console.log(`Fractional year: ${fractionalYear}`);
-
-    const mileage = Math.round(mileageStart + fractionalYear * yearlyMileage);
-    console.log(`Adjusting mileage: ${mileage}`);
-
-    // now update the `mileage` query string param on the url
-    assetMetadata.url = assetMetadata.url.replace(
-      /mileage=\d+/,
-      `mileage=${mileage}`,
-    );
-  }
-
-  const svgPath = await extractTextFromXPath(
-    browser,
-    assetMetadata.url,
-    // TODO there's a priceAdvisorWrapper div, but the `object` is not always nested within it
-    // "//*[@id='priceAdvisorWrapper']/*/object/@data"
-
-    // NOTE cannot use `string(//object/@data)`, puppeteer does not support a non-element return
-    "//object/@data",
-  );
-
-  if (!svgPath) {
-    console.log(`could not find svg path for ${assetMetadata.url}`);
-    return;
-  }
-
-  const kbbPriceWithCurrency: string | undefined | null =
-    await extractTextFromXPath(
-      browser,
-      svgPath,
-      "//*[@id='RangeBox']/*[name()='text'][4]",
-    );
-
-  if (!kbbPriceWithCurrency) {
-    console.warn(`could not find kbb price on svg ${svgPath}`);
-    return;
-  } else {
-    console.log(`kbb price: ${kbbPriceWithCurrency}`);
-  }
-
-  let kbbPrice: number = parseCurrencyStringToFloat(kbbPriceWithCurrency);
-
-  if (assetMetadata.adjustment) {
-    console.log(`applying adjustment of ${assetMetadata.adjustment}`);
-    kbbPrice = kbbPrice + assetMetadata.adjustment;
-  }
-
-  await updateAssetPrice(parseInt(lunchMoneyAssetId), kbbPrice);
-}
-
-if (!process.env.LUNCH_MONEY_API_KEY) {
-  console.error("Lunch Money API key not set");
-  process.exit(1);
-}
-
-console.log(`Updating price data ${new Date()}`);
-
-const lunchMoney = new LunchMoney({ token: process.env.LUNCH_MONEY_API_KEY });
-const browser = await getBrowser();
-
-const { ASSET_PATH } = process.env;
-let assetsPath = ASSET_PATH;
-
-if (!assetsPath) {
-  assetsPath = `${process.cwd()}/assets.json`;
-}
-
-const assets: {
-  [key: string]: { url: string; redfin?: string; adjustment?: number };
-} = readJSON(assetsPath);
-
-for (const [lunchMoneyAssetId, assetMetadata] of Object.entries(assets)) {
-  if (assetMetadata.url.includes("kbb.com")) {
-    await extractKBBPrice(lunchMoneyAssetId, assetMetadata);
-  } else if (assetMetadata.url.includes("zillow.com")) {
-    let homeValue;
-
-    const zillowHomeValue = await extractTextFromXPath(
-      browser,
-      assetMetadata.url,
-      // if this breaks, load up a browser, identify the price, and copy the new xpath
-      // https://www.zillow.com/homedetails/2090-Bedminster-Rd-Perkasie-PA-18944/8943331_zpid/
-      '//*[@id="home-details-home-values"]/div/div[1]/div/div/div[1]/div/p/h3',
-    );
-
-    if (!zillowHomeValue) {
-      console.log(`could not find zillow home value for ${assetMetadata.url}`);
-      continue;
-    }
-
-    console.log(`zillow home value: ${zillowHomeValue}`);
-
-    // if redfin link provided, average out the two of them
-    if (assetMetadata.redfin) {
-      const redfinHomeValue = await extractTextFromXPath(
-        browser,
-        assetMetadata.redfin,
-        // NOTE if this changes, just load up a browser, identify the price, and copy the new xpath
-        '//*[@data-rf-test-id="abp-price"]/div[@class="statsValue"]',
-      );
-
-      if (redfinHomeValue) {
-        console.log(`redfin: ${redfinHomeValue}, zillow: ${zillowHomeValue}`);
-
-        homeValue = Math.round(
-          (parseCurrencyStringToFloat(redfinHomeValue) +
-            parseCurrencyStringToFloat(zillowHomeValue)) /
-            2,
-        );
-
-        console.log(`refind home value: ${homeValue}`);
-      } else {
-        console.log(
-          `could not find redfin home value for ${assetMetadata.redfin}`,
-        );
-
-        homeValue = parseCurrencyStringToFloat(zillowHomeValue);
-      }
-    } else {
-      homeValue = parseCurrencyStringToFloat(zillowHomeValue);
-    }
-
-    await updateAssetPrice(parseInt(lunchMoneyAssetId), homeValue);
-  } else {
-    console.error("unsupported asset type");
-  }
-}
-
-await browser.close();
-console.log("assets updated");
+print("Assets updated")
