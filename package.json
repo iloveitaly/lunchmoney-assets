@@ -31,7 +31,7 @@
     "@types/detect-rpi": "^1.5.0",
     "@types/eslint": "^9.6.1",
     "@types/underscore": "^1.13.0",
-    "@typescript-eslint/eslint-plugin": "^8.33.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.33.0",
     "eslint": "^9.39.0",
     "eslint-config-prettier": "^10.1.8",
