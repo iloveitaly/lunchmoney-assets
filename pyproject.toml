@@ -9,8 +9,3 @@ dependencies = [
     "playwright>=1.50.0",
     "python-decouple-typed>=3.11.0",
 ]
-
-[dependency-groups]
-dev = [
-    "pudb>=2024.1.3",
-]

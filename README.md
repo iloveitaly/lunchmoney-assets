@@ -92,7 +92,7 @@ docker cp ./lunch-money-assets.json lunchmoney_assets:./app/assets.json
 Set a `SCHEDULE` environment variable when starting the container to update the assets at a regular interval. The value should be a [cron expression](https://crontab.guru/).
 
 ```shell
-docker run -d --name lunchmoney-assets -e SCHEDULE="0 0 * * *" iloveitaly/lunchmoney-assets
+docker run -d --name lunchmoney-assets -e SCHEDULE="0 0 * * *" -e LUNCH_MONEY_API_KEY=thekey -v ./assets.json:/app/assets.json iloveitaly/lunchmoney-assets
 ```
 
 ## Development

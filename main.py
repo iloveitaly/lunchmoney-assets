@@ -127,7 +127,9 @@ def get_zillow_valuation(browser, asset_metadata):
     page = browser.new_page()
     try:
         log.debug(f"Navigating to Zillow homepage for {asset_metadata['url']}")
-        wait_for_page_load(page, "https://www.zillow.com/")
+        wait_for_page_load(page, asset_metadata['url'])
+
+        breakpoint()
 
         # Extract address from URL using regex
         import re
@@ -151,6 +153,8 @@ def get_zillow_valuation(browser, asset_metadata):
             page.wait_for_selector(f"xpath={search_xpath}", timeout=10000)
 
             log.debug(f"Filling search box with address: {address}")
+            page.click(f"xpath={search_xpath}")
+
             # Type address character by character
             for char in address:
                 page.type(f"xpath={search_xpath}", char)
