@@ -1,5 +1,5 @@
 import click
-import structlog
+from structlog_config import configure_logger
 import os
 import json
 import re
@@ -9,19 +9,8 @@ from lunchable import LunchMoney
 
 from decouple import config
 
-
 # Configure structlog
-
-structlog.configure(
-    processors=[
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.JSONRenderer(),
-    ],
-    context_class=dict,
-    logger_factory=structlog.PrintLoggerFactory(),
-)
-
-log = structlog.get_logger()
+log = configure_logger()
 
 
 def load_assets(path):

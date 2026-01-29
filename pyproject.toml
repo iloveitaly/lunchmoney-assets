@@ -5,17 +5,15 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "camoufox[geoip]>=0.4.11",
     "click>=8.2.1",
     "firecrawl-py>=4.13.4",
     "lunchable>=1.4.3",
-    "playwright>=1.50.0",
     "python-decouple-typed>=3.11.0",
-    "requests>=2.32.4",
-    "structlog>=25.5.0",
+    "structlog-config>=0.8.0",
 ]
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.408",
     "ruff>=0.14.14",
 ]
