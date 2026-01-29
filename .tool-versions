@@ -1,3 +1,2 @@
-bun 1.2.2
-python 3.13.2
-uv 0.6.3
+python 3.14
+uv latest
