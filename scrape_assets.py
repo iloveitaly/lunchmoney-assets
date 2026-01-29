@@ -6,7 +6,6 @@ import re
 from datetime import datetime
 from firecrawl import Firecrawl
 from lunchable import LunchMoney
-from lxml import html
 
 from decouple import config
 
