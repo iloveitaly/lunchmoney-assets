@@ -1,1 +1,2 @@
+# Run at the start of each month
 0 0 1 * * python main.py

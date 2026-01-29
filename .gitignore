@@ -2,3 +2,4 @@
 assets.json
 .venv
 tmp/
+.claude/settings.local.json
