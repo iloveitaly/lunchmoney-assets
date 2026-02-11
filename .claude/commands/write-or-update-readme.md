@@ -10,7 +10,7 @@ Write or update the @README.md:
 * Don't try to be too cute: no story telling and do not be overly salesly.
 * No emojis
 * Assume `uv` and omit pip examples
-* Include a single line at the end `# [MIT License](LICENSE.md)`
+* Include a single line at the end `## [MIT License](LICENSE.md)` (above any template attribution)
 * When writing the overview and `#` header, be sure to:
   * Think of what keywords another developer might search for.
   * Include the primary goal of the project or primary problem solved in a short paragraph.
@@ -19,8 +19,14 @@ Write or update the @README.md:
       Dependencies'
 * After a general overview, include the following sections: Installation, Usage, Features.
   * When writing out a list of features, use a bullet list.
+  * Do not include "internal" features like `  * **Python 3.13+ with modern type parameter syntax**`
 * Do not include every usage example varaint for a CLI or library. The goal is to give an overview so the user can figure out the rest on their own.
+* Do not remove badges or link to upstream template repo
 
 Here's the writing style you should use:
 
 > Conversational and personal, often in first-person with enthusiastic, reflective tone on tech, startups, and health topics. Logical structure: hooks, breakdowns via subsections/lists, and practical steps. Vocabulary mixes everyday terms with technical jargon (e.g., tmux, Caddy, REPL). Short-to-medium sentences for clarity; semi-formal with casual asides and anecdotes
+
+### Update `pyproject.toml` metadata
+
+Update the `pyproject.toml` keywords (maximum of 4) and description based on the contents of this repo. Do not use `.` in a keyword.
