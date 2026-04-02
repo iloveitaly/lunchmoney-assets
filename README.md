@@ -1,37 +1,36 @@
-# Update Real Estate & Car Values in LunchMoney
+# Synchronize LunchMoney Asset Balances with Real Estate and Vehicle Valuations
 
-Tool to update real estate and car values in [LunchMoney](https://mikebian.co/lunchmoney). Supports scraping values from Zillow, Redfin, and Kelly Bluebook.
+I'm a big fan of LunchMoney for tracking my finances, but manually updating home and car values is a chore. I wrote this tool to automate that process by scraping Zillow, Redfin, and Kelley Blue Book. It calculates current vehicle mileage and even averages real estate estimates to keep my net worth tracking as accurate as possible without the manual overhead.
 
-Why build this tool rather than the existing scripts out there?
+## Installation
 
-- The Kelly Bluebook page structure changed and the existing logic wasn't working for me
-- I wanted a single tool to manage both real estate and cars
-- Wanted a good excuse to play around with puppeteer
+You'll need `uv` installed to get things running. Once you have that, just sync the dependencies:
 
-## Usage
+```shell
+uv sync
+```
 
-I wrote this using node 17, but I imagine it will work with much older versions. Use `asdf install` to setup node if you haven't already.
+Set up your environment by copying the example file and filling in your API keys:
 
 ```shell
 cp .env-example .env
-# generate a API key and add it to .env
-
-touch assets.json
-# add your assets to assets.json
-
-npm install
-node dist/index.js
 ```
 
-Or, if you have a docker container setup, you can run it directly:
+## Usage
+
+I usually run this monthly to keep my balances fresh. You'll need an `assets.json` file to define what you want to track. The key for each entry is the LunchMoney asset ID.
+
+Run the script:
 
 ```shell
-docker exec -i ca32c16fa00e node dist/index.js
+uv run main.py
 ```
 
-### `assets.json` File Path
+If you want to check the values without pushing them to LunchMoney, use the dry-run flag:
 
-The program first checks for the environment variable `ASSET_PATH` which should be a string path to the assets.json file to use. For example: `/home/assets.json`. If the environment variable doesn't exist, it then checks inside the current working directory of the node process. For docker deployments, this is inside the `/app` folder.
+```shell
+uv run main.py --dry-run
+```
 
 ### `assets.json` Structure
 
@@ -40,86 +39,30 @@ Specify the assets to be updated in the `assets.json` file. The key of the hash 
 ```json
 {
   "23760": {
-    "__comment": "you can specify a zillow and redfin link to set the balance as the average of the two",
     "url": "https://www.zillow.com/homes/your-home/123/",
     "redfin": "https://www.redfin.com/STATE/CITY/yourhome/home/123"
   },
   "23759": {
-    "__comment": "kelly blue book link",
     "url": "https://www.kbb.com/your/car/year/model/?condition=good&intent=trade-in-sell&mileage=100000&modalview=false&options=6763005%7ctrue&pricetype=private-party",
     "mileageStart": 132800,
-    "mileageDate": "11/29/23",
+    "mileageDate": "2023-11-29",
     "yearlyMileage": 8000
   },
-  "23759": {
-    "__comment": "a car that is more damaged than it looks",
-    "url": "https://www.kbb.com/your/car/year/model/?condition=good&intent=trade-in-sell&mileage=100000&modalview=false&options=6763005%7ctrue&pricetype=private-party",
+  "23758": {
+    "url": "https://www.kbb.com/your/car/year/model/...",
     "adjustment": -500
   }
 }
 ```
 
-Note that mileage can be optionally specified. If it is, the tool will calculate the depreciation based on the mileage and the date of the last update.
+Note that mileage can be optionally specified. If it is, the tool will calculate the current mileage based on the `mileageStart`, `mileageDate`, and `yearlyMileage`.
 
-## Docker Deployment
+## Features
 
-https://hub.docker.com/r/iloveitaly/lunchmoney-assets
+* **Real Estate Averaging**: Scrapes both Zillow and Redfin, using the average of both for a more balanced valuation.
+* **Vehicle Valuations**: Pulls private party values from KBB using Firecrawl's LLM extraction.
+* **Dynamic Mileage**: Automatically estimates your car's current mileage based on a starting date and yearly average so you don't have to update it manually.
+* **Manual Adjustments**: Support for adding or subtracting fixed amounts from the scraped value to account for specific property or vehicle conditions.
+* **Robust Scraping**: Built on Firecrawl, which handles the heavy lifting of navigating complex page structures.
 
-Here's the docker-compose file I use:
-
-```yaml
-lunchmoney_assets:
-  container_name: lunchmoney-assets
-  image: iloveitaly/lunchmoney-assets:latest
-  restart: unless-stopped
-  environment:
-    - SCHEDULE=@monthly
-    - LUNCH_MONEY_API_KEY=THE_KEY
-```
-
-Copy your assets config into the container:
-
-```shell
-docker compose cp ./lunch-money-assets.json lunchmoney_assets:./app/assets.json
-```
-
-Or, if you are using docker without compose:
-
-```shell
-docker cp ./lunch-money-assets.json lunchmoney_assets:./app/assets.json
-```
-
-Set a `SCHEDULE` environment variable when starting the container to update the assets at a regular interval. The value should be a [cron expression](https://crontab.guru/).
-
-```shell
-docker run -d --name lunchmoney-assets -e SCHEDULE="0 0 * * *" -e LUNCH_MONEY_API_KEY=thekey -v ./assets.json:/app/assets.json iloveitaly/lunchmoney-assets
-```
-
-## Development
-
-Setup your env (I use [direnv](https://direnv.net)):
-
-```shell
-cp .envrc-example .envrc
-```
-
-Compile typescript:
-
-```shell
-npm run dev
-```
-
-Get a list of all accounts in your lunchmoney account:
-
-```shell
-http GET https://dev.lunchmoney.app/v1/assets -A bearer -a $LUNCH_MONEY_API_KEY | jqp
-
-# or match against a specific account
-http GET https://dev.lunchmoney.app/v1/assets -A bearer -a $LUNCH_MONEY_API_KEY | jq '.assets | map(select(.name == "Camry"))'
-```
-
-## TODO
-
-- [ ] throw a user-friendly error if `assets.json` is not defined
-- [ ] It seems as though the KBB logic only works for private party priced URLs. Not sure why.
-- [ ] Automatically calculate additional mileage based on time passed
+## [MIT License](LICENSE.md)
