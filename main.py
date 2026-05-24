@@ -1,4 +1,5 @@
 import click
+import httpx
 import json
 import re
 from datetime import datetime
@@ -161,12 +162,10 @@ def get_kbb_price(app, asset_id, metadata, dry_run):
         only_main_content=False,
     )
 
-    if not hasattr(scrape_result, "json") or not scrape_result.json:
-        log.error("no json returned from firecrawl", asset_id=asset_id, url=url)
+    extracted_data = getattr(scrape_result, "json", None) or {}
 
-        return None
-
-    extracted_data = scrape_result.json
+    if not extracted_data:
+        log.warning("no json returned from firecrawl", asset_id=asset_id, url=url)
 
     raw_html = getattr(scrape_result, "raw_html", None) or ""
     price_advisor_url = _extract_kbb_price_advisor_svg_url(raw_html)
@@ -180,13 +179,8 @@ def get_kbb_price(app, asset_id, metadata, dry_run):
             )
 
     if price_advisor_url:
-        advisor_result = app.scrape(
-            price_advisor_url,
-            formats=["rawHtml"],
-            only_main_content=False,
-        )
-
-        advisor_svg = getattr(advisor_result, "raw_html", None) or ""
+        # Fetch the SVG directly — Firecrawl cannot process image/svg+xml responses
+        advisor_svg = httpx.get(price_advisor_url, follow_redirects=True).text
         svg_price = _parse_private_party_value_from_kbb_svg(advisor_svg)
 
         if svg_price:
