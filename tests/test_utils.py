@@ -1,5 +1,6 @@
 import pytest
-from main import parse_currency, _extract_kbb_price_advisor_svg_url, _replace_query_param, _get_kbb_zipcode
+from scrapers.firecrawl import _parse_currency as parse_currency, _extract_kbb_price_advisor_svg_url, _replace_query_param
+from main import _get_kbb_zipcode
 
 def test_parse_currency():
     assert parse_currency("$1,234.56") == 1234.56
