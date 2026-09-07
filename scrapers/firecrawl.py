@@ -10,6 +10,18 @@ from pydantic import BaseModel, Field
 from structlog_config import configure_logger
 
 from .base import VehiclePrice
+from .utils import (
+    _extract_kbb_price_advisor_svg_url,
+    _parse_currency,
+    _parse_private_party_value_from_kbb_svg,
+    _replace_query_param,
+    _url_hash,
+    extract_kbb_price_advisor_svg_url,
+    parse_currency,
+    parse_private_party_value_from_kbb_svg,
+    replace_query_param,
+    url_hash,
+)
 
 log = configure_logger()
 
@@ -39,70 +51,6 @@ class _KBBExtraction(BaseModel):
         None, description="The Typical Listing Price or Retail Value."
     )
 
-
-def _parse_currency(value_str: str | None) -> float:
-    if not value_str:
-        return 0.0
-
-    return float(re.sub(r"[^0-9.]", "", value_str))
-
-
-def _extract_kbb_price_advisor_svg_url(raw_html: str) -> str | None:
-    if not raw_html:
-        return None
-
-    match = re.search(
-        r'"href"\s*:\s*"(upa\.syndication\.kbb\.com/usedcar/[^"]+)"',
-        raw_html,
-    )
-
-    if not match:
-        match = re.search(r'upa\.syndication\.kbb\.com/usedcar/[^"\s]+', raw_html)
-
-        if not match:
-            return None
-
-    href = match.group(1) if match.lastindex else match.group(0)
-    href = href.replace("\\u0026", "&").replace("&", "&")
-
-    if href.startswith("http"):
-        return href
-
-    return f"https://{href}"
-
-
-def _parse_private_party_value_from_kbb_svg(svg: str) -> float | None:
-    if not svg:
-        return None
-
-    match = re.search(
-        r"Private Party Value</text>\s*<text[^>]*>\s*(\$[0-9,]+)",
-        svg,
-        flags=re.IGNORECASE,
-    )
-
-    if not match:
-        return None
-
-    return _parse_currency(match.group(1))
-
-
-def _replace_query_param(url: str, key: str, value: str) -> str:
-    if not url or not key:
-        return url
-
-    pattern = rf"([?&]){re.escape(key)}=[^&]*"
-
-    if re.search(pattern, url):
-        return re.sub(pattern, rf"\g<1>{key}={value}", url)
-
-    separator = "&" if "?" in url else "?"
-
-    return f"{url}{separator}{key}={value}"
-
-
-def _url_hash(url: str) -> str:
-    return hashlib.sha1(url.encode()).hexdigest()[:12]
 
 
 class FirecrawlScraper:

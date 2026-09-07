@@ -9,71 +9,18 @@ from decouple import config
 from structlog_config import configure_logger
 
 from .base import VehiclePrice
-from .firecrawl import (
-    _extract_kbb_price_advisor_svg_url,
-    _parse_currency,
-    _parse_private_party_value_from_kbb_svg,
-    _replace_query_param,
-    _url_hash,
+from .utils import (
+    extract_kbb_price_advisor_svg_url,
+    extract_property_price_from_html,
+    parse_currency,
+    parse_private_party_value_from_kbb_svg,
+    replace_query_param,
+    url_hash,
 )
 
 log = configure_logger()
 
 SPIDER_API_BASE = "https://api.spider.cloud"
-
-
-def _extract_property_price_from_html(raw_html: str, url: str = "") -> float | None:
-    """Extract property price from HTML using platform-specific selectors and fallbacks."""
-    if not raw_html:
-        return None
-
-    # 1. Zillow Zestimate
-    if match := re.search(r'"zestimate"\s*:\s*([0-9]+)', raw_html):
-        return float(match.group(1))
-
-    # 2. Redfin hero price / Redfin Estimate
-    redfin_patterns = [
-        r'data-rf-test-id=[\'"]abp-price[\'"][^>]*>.*?class=[\'"][^\'"]*price[^\'"]*[\'"][^>]*>.*?\$([0-9,]+)',
-        r'RedfinEstimateValueHeader.*?smallerFont[\'"][^>]*>\$([0-9,]+)',
-        r'estimate the home(?:\x27|\\u0027|\x27)s value is \$([0-9,]+)',
-        r'class=[\'"]statsValue price[\'"][^>]*>.*?\$([0-9,]+)',
-    ]
-    for pattern in redfin_patterns:
-        if match := re.search(pattern, raw_html, re.DOTALL | re.IGNORECASE):
-            return _parse_currency(match.group(1))
-
-    # 3. OpenGraph / Twitter description meta tags (e.g. Zillow: "valued at $561,800")
-    meta_patterns = [
-        r'<meta[^>]*property=[\'"]og:description[\'"][^>]*content=[\'"]([^\'"]+)[\'"]',
-        r'<meta[^>]*name=[\'"]description[\'"][^>]*content=[\'"]([^\'"]+)[\'"]',
-        r'<meta[^>]*name=[\'"]twitter:description[\'"][^>]*content=[\'"]([^\'"]+)[\'"]',
-    ]
-    for pattern in meta_patterns:
-        if match := re.search(pattern, raw_html, re.IGNORECASE):
-            text = match.group(1)
-            # Find dollar amount with thousands separator
-            if price_match := re.search(r"\$([0-9]{1,3}(?:,[0-9]{3})+)", text):
-                return _parse_currency(price_match.group(1))
-
-    # 4. JSON-LD schemas
-    for script_match in re.finditer(
-        r'<script[^>]*type=[\'"]application/ld\+json[\'"][^>]*>(.*?)</script>',
-        raw_html,
-        re.DOTALL | re.IGNORECASE,
-    ):
-        try:
-            data = json.loads(script_match.group(1))
-            items = data if isinstance(data, list) else [data]
-            for item in items:
-                if "offers" in item and isinstance(item["offers"], dict):
-                    if price := item["offers"].get("price"):
-                        return _parse_currency(str(price))
-                if price := item.get("price"):
-                    return _parse_currency(str(price))
-        except Exception:
-            continue
-
-    return None
 
 
 class SpiderScraper:
@@ -112,9 +59,9 @@ class SpiderScraper:
         raw_html = item.get("content", "")
         raw_html = html.unescape(raw_html)
 
-        price_advisor_url = _extract_kbb_price_advisor_svg_url(raw_html)
+        price_advisor_url = extract_kbb_price_advisor_svg_url(raw_html)
         if price_advisor_url and zipcode:
-            price_advisor_url = _replace_query_param(price_advisor_url, "zipcode", zipcode)
+            price_advisor_url = replace_query_param(price_advisor_url, "zipcode", zipcode)
 
         private_party_value = None
         trade_in_value = None
@@ -123,14 +70,14 @@ class SpiderScraper:
         if price_advisor_url:
             log.info("found kbb price advisor svg", url=price_advisor_url)
             advisor_svg = httpx.get(price_advisor_url, follow_redirects=True).text
-            svg_price = _parse_private_party_value_from_kbb_svg(advisor_svg)
+            svg_price = parse_private_party_value_from_kbb_svg(advisor_svg)
             if svg_price:
                 log.info("extracted kbb private party price from advisor svg", price=svg_price)
                 private_party_value = svg_price
 
-        url_hash = _url_hash(url)
+        debug_hash = url_hash(url)
         if raw_html:
-            debug_path = Path("/tmp") / f"kbb_spider_{url_hash}.html"
+            debug_path = Path("/tmp") / f"kbb_spider_{debug_hash}.html"
             debug_path.write_text(raw_html)
 
         return VehiclePrice(
@@ -169,7 +116,7 @@ class SpiderScraper:
                 )
                 return None
 
-            price = _extract_property_price_from_html(content, url=url)
+            price = extract_property_price_from_html(content, url=url)
             if price is not None:
                 log.info("extracted property price", url=url, price=price)
                 return price
@@ -186,15 +133,20 @@ class SpiderScraper:
                 ai_results = self._post("/ai/scrape", ai_payload, timeout=60.0)
                 ai_item = ai_results[0] if ai_results else {}
                 ai_content = ai_item.get("content", "")
-                if ai_price := _extract_property_price_from_html(ai_content, url=url):
+                if ai_price := extract_property_price_from_html(ai_content, url=url):
                     log.info("extracted property price from /ai/scrape content", url=url, price=ai_price)
                     return ai_price
                 extracted_data = ai_item.get("metadata", {}).get("extracted_data")
                 if isinstance(extracted_data, dict) and (p := extracted_data.get("price")):
-                    return _parse_currency(str(p))
+                    return parse_currency(str(p))
 
             log.error("could not extract price from spider response", url=url)
             return None
         except Exception as e:
             log.error("spider property scrape error", url=url, error=str(e))
             return None
+
+
+# Backward-compatibility alias
+_extract_property_price_from_html = extract_property_price_from_html
+

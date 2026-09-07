@@ -1,5 +1,9 @@
 import pytest
-from scrapers.firecrawl import _parse_currency as parse_currency, _extract_kbb_price_advisor_svg_url, _replace_query_param
+from scrapers.utils import (
+    extract_kbb_price_advisor_svg_url,
+    parse_currency,
+    replace_query_param,
+)
 from main import _get_kbb_zipcode
 
 def test_parse_currency():
@@ -10,23 +14,43 @@ def test_parse_currency():
 
 def test_extract_kbb_price_advisor_svg_url():
     raw_html = 'some stuff "href" : "upa.syndication.kbb.com/usedcar/test?param=1" more stuff'
-    assert _extract_kbb_price_advisor_svg_url(raw_html) == "https://upa.syndication.kbb.com/usedcar/test?param=1"
+    assert extract_kbb_price_advisor_svg_url(raw_html) == "https://upa.syndication.kbb.com/usedcar/test?param=1"
     
     raw_html_with_http = 'some stuff upa.syndication.kbb.com/usedcar/test?param=1 more stuff'
-    assert _extract_kbb_price_advisor_svg_url(raw_html_with_http) == "https://upa.syndication.kbb.com/usedcar/test?param=1"
+    assert extract_kbb_price_advisor_svg_url(raw_html_with_http) == "https://upa.syndication.kbb.com/usedcar/test?param=1"
     
-    assert _extract_kbb_price_advisor_svg_url("") is None
+    assert extract_kbb_price_advisor_svg_url("") is None
 
 def test_replace_query_param():
     url = "https://example.com/test?a=1&b=2"
-    assert _replace_query_param(url, "a", "3") == "https://example.com/test?a=3&b=2"
-    assert _replace_query_param(url, "c", "4") == "https://example.com/test?a=1&b=2&c=4"
-    assert _replace_query_param("https://example.com/test", "a", "1") == "https://example.com/test?a=1"
+    assert replace_query_param(url, "a", "3") == "https://example.com/test?a=3&b=2"
+    assert replace_query_param(url, "c", "4") == "https://example.com/test?a=1&b=2&c=4"
+    assert replace_query_param("https://example.com/test", "a", "1") == "https://example.com/test?a=1"
+
 
 def test_get_kbb_zipcode(monkeypatch):
     assert _get_kbb_zipcode({"zipcode": "12345"}) == "12345"
     assert _get_kbb_zipcode({"zipcode": " 12345 "}) == "12345"
-    
-    # Test default from config if missing in metadata
-    # We'd need to mock config or environment variables
-    pass
+
+
+def test_parse_private_party_value_from_kbb_svg():
+    from scrapers.utils import parse_private_party_value_from_kbb_svg
+
+    sample_svg = """
+    <svg>
+      <text>Private Party Value</text>
+      <text>$22,350</text>
+    </svg>
+    """
+    assert parse_private_party_value_from_kbb_svg(sample_svg) == 22350.0
+    assert parse_private_party_value_from_kbb_svg("") is None
+    assert parse_private_party_value_from_kbb_svg("<svg><text>No match</text></svg>") is None
+
+
+def test_url_hash():
+    from scrapers.utils import url_hash
+
+    h = url_hash("https://example.com/test")
+    assert isinstance(h, str)
+    assert len(h) == 12
+
