@@ -1,10 +1,10 @@
-import pytest
+from main import _get_kbb_zipcode
 from scrapers.utils import (
     extract_kbb_price_advisor_svg_url,
     parse_currency,
     replace_query_param,
 )
-from main import _get_kbb_zipcode
+
 
 def test_parse_currency():
     assert parse_currency("$1,234.56") == 1234.56

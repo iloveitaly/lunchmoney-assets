@@ -471,6 +471,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "click" },
     { name = "firecrawl-py" },
+    { name = "httpx" },
     { name = "lunchable" },
     { name = "pydantic" },
     { name = "python-decouple-typed" },
@@ -488,6 +489,7 @@ dev = [
 requires-dist = [
     { name = "click", specifier = ">=8.2.1" },
     { name = "firecrawl-py", specifier = ">=4.13.4" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "lunchable", specifier = ">=1.4.3" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "python-decouple-typed", specifier = ">=3.11.0" },

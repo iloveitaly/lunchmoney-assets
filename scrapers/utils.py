@@ -116,12 +116,15 @@ def extract_property_price_from_html(raw_html: str, url: str = "") -> float | No
             data = json.loads(script_match.group(1))
             items = data if isinstance(data, list) else [data]
             for item in items:
-                if "offers" in item and isinstance(item["offers"], dict):
-                    if price := item["offers"].get("price"):
-                        return parse_currency(str(price))
+                if (
+                    "offers" in item
+                    and isinstance(item["offers"], dict)
+                    and (price := item["offers"].get("price"))
+                ):
+                    return parse_currency(str(price))
                 if price := item.get("price"):
                     return parse_currency(str(price))
-        except Exception:
+        except (json.JSONDecodeError, TypeError, KeyError, ValueError):
             continue
 
     return None

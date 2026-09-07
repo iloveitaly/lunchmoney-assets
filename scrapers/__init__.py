@@ -12,5 +12,5 @@ def build_scraper() -> Scraper:
     return FirecrawlScraper()
 
 
-__all__ = ["Scraper", "VehiclePrice", "FirecrawlScraper", "SpiderScraper", "build_scraper"]
+__all__ = ["FirecrawlScraper", "Scraper", "SpiderScraper", "VehiclePrice", "build_scraper"]
 

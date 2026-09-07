@@ -1,6 +1,4 @@
 import html
-import json
-import re
 from pathlib import Path
 from typing import Any
 
@@ -142,7 +140,7 @@ class SpiderScraper:
 
             log.error("could not extract price from spider response", url=url)
             return None
-        except Exception as e:
+        except (httpx.HTTPError, RuntimeError, KeyError, ValueError, TypeError) as e:
             log.error("spider property scrape error", url=url, error=str(e))
             return None
 

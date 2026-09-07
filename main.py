@@ -1,9 +1,9 @@
-import click
 import json
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
+import click
 from decouple import config
 from lunchable import LunchMoney
 from structlog_config import configure_logger
@@ -40,9 +40,11 @@ def get_kbb_price(scraper, asset_id, metadata, dry_run):
 
         mileage_start = metadata["mileageStart"]
 
-        mileage_date = datetime.strptime(metadata["mileageDate"], "%Y-%m-%d")
+        mileage_date = datetime.strptime(metadata["mileageDate"], "%Y-%m-%d").replace(
+            tzinfo=UTC
+        )
 
-        current_date = datetime.now()
+        current_date = datetime.now(UTC)
 
         days_passed = (current_date - mileage_date).days
 
