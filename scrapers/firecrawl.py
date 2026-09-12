@@ -1,7 +1,7 @@
 import base64
 from pathlib import Path
 
-import httpx
+import httpx2
 from decouple import config
 from firecrawl import Firecrawl
 from firecrawl.v2.types import WaitAction
@@ -82,7 +82,7 @@ class FirecrawlScraper:
 
         if price_advisor_url:
             # Fetch the SVG directly — Firecrawl cannot process image/svg+xml responses
-            advisor_svg = httpx.get(price_advisor_url, follow_redirects=True).text
+            advisor_svg = httpx2.get(price_advisor_url, follow_redirects=True).text
             svg_price = parse_private_party_value_from_kbb_svg(advisor_svg)
 
             if svg_price:

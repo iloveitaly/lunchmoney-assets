@@ -2,7 +2,7 @@ import html
 from pathlib import Path
 from typing import Any
 
-import httpx
+import httpx2
 from decouple import config
 from structlog_config import configure_logger
 
@@ -32,7 +32,7 @@ class SpiderScraper:
 
     def _post(self, endpoint: str, payload: dict[str, Any], timeout: float = 60.0) -> list[dict]:
         url = f"{SPIDER_API_BASE}{endpoint}"
-        with httpx.Client(timeout=timeout) as client:
+        with httpx2.Client(timeout=timeout) as client:
             resp = client.post(url, headers=self._headers, json=payload)
             if resp.status_code == 402:
                 error_info = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else resp.text
@@ -67,7 +67,7 @@ class SpiderScraper:
 
         if price_advisor_url:
             log.info("found kbb price advisor svg", url=price_advisor_url)
-            advisor_svg = httpx.get(price_advisor_url, follow_redirects=True).text
+            advisor_svg = httpx2.get(price_advisor_url, follow_redirects=True).text
             svg_price = parse_private_party_value_from_kbb_svg(advisor_svg)
             if svg_price:
                 log.info("extracted kbb private party price from advisor svg", price=svg_price)
@@ -140,7 +140,7 @@ class SpiderScraper:
 
             log.error("could not extract price from spider response", url=url)
             return None
-        except (httpx.HTTPError, RuntimeError, KeyError, ValueError, TypeError) as e:
+        except (httpx2.HTTPError, RuntimeError, KeyError, ValueError, TypeError) as e:
             log.error("spider property scrape error", url=url, error=str(e))
             return None
 
