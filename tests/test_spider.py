@@ -16,6 +16,20 @@ def test_build_scraper_selection(monkeypatch):
     assert isinstance(build_scraper(), FirecrawlScraper)
 
 
+def test_build_scraper_auto_detect(monkeypatch):
+    monkeypatch.delenv("SCRAPER_BACKEND", raising=False)
+    monkeypatch.setenv("SPIDER_API_KEY", "test-spider-key")
+    assert isinstance(build_scraper(), SpiderScraper)
+
+
+def test_firecrawl_scraper_missing_key(monkeypatch):
+    import pytest
+
+    monkeypatch.delenv("FIRECRAWL_KEY", raising=False)
+    with pytest.raises(ValueError, match="FIRECRAWL_KEY is required"):
+        FirecrawlScraper()
+
+
 def test_extract_property_price_json_ld():
     sample_html = """
     <html>

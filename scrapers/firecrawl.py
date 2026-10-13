@@ -46,9 +46,11 @@ class _KBBExtraction(BaseModel):
 
 
 class FirecrawlScraper:
-    def __init__(self) -> None:
-        api_key = config("FIRECRAWL_KEY")
-        self._client = Firecrawl(api_key=api_key)
+    def __init__(self, api_key: str | None = None) -> None:
+        self.api_key = api_key or config("FIRECRAWL_KEY", default=None)
+        if not self.api_key:
+            raise ValueError("FIRECRAWL_KEY is required when using FirecrawlScraper.")
+        self._client = Firecrawl(api_key=self.api_key)
 
     def fetch_vehicle_price(self, url: str, zipcode: str | None = None) -> VehiclePrice:
         log.info("scraping kbb with detailed json extraction", url=url)
