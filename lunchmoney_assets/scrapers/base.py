@@ -11,6 +11,7 @@ class VehiclePrice(BaseModel):
 
 @runtime_checkable
 class Scraper(Protocol):
-    def fetch_vehicle_price(self, url: str, zipcode: str | None = None) -> VehiclePrice: ...
+    def fetch_vehicle_price(
+        self, url: str, zipcode: str | None = None
+    ) -> VehiclePrice: ...
     def fetch_property_price(self, url: str) -> float | None: ...
-

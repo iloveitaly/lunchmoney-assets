@@ -1,8 +1,8 @@
 import pytest
 
-from scrapers import FirecrawlScraper, SpiderScraper, build_scraper
-from scrapers.base import Scraper
-from scrapers.spider import _extract_property_price_from_html
+from lunchmoney_assets.scrapers import FirecrawlScraper, SpiderScraper, build_scraper
+from lunchmoney_assets.scrapers.base import Scraper
+from lunchmoney_assets.scrapers.utils import extract_property_price_from_html
 
 
 def test_spider_implements_protocol():
@@ -67,7 +67,7 @@ def test_extract_property_price_json_ld():
       <body></body>
     </html>
     """
-    assert _extract_property_price_from_html(sample_html) == 625000.0
+    assert extract_property_price_from_html(sample_html) == 625_000.0
 
 
 def test_extract_property_price_meta():
@@ -79,12 +79,15 @@ def test_extract_property_price_meta():
       <body></body>
     </html>
     """
-    assert _extract_property_price_from_html(sample_html) == 645000.0
+    assert extract_property_price_from_html(sample_html) == 645_000.0
 
 
 def test_extract_property_price_empty():
-    assert _extract_property_price_from_html("") is None
-    assert _extract_property_price_from_html("<html><body>No price here</body></html>") is None
+    assert extract_property_price_from_html("") is None
+    assert (
+        extract_property_price_from_html("<html><body>No price here</body></html>")
+        is None
+    )
 
 
 def test_extract_property_price_zillow():
@@ -95,7 +98,7 @@ def test_extract_property_price_zillow():
       </body>
     </html>
     """
-    assert _extract_property_price_from_html(sample_next_data) == 561800.0
+    assert extract_property_price_from_html(sample_next_data) == 561_800.0
 
 
 def test_extract_property_price_redfin():
@@ -104,10 +107,9 @@ def test_extract_property_price_redfin():
       <div class="statsValue price"><span class="">$575,063</span></div>
     </div>
     """
-    assert _extract_property_price_from_html(sample_redfin) == 575063.0
+    assert extract_property_price_from_html(sample_redfin) == 575_063.0
 
     sample_redfin_text = """
     <div>Based on Redfin's Englewood data, we estimate the home's value is $575,063</div>
     """
-    assert _extract_property_price_from_html(sample_redfin_text) == 575063.0
-
+    assert extract_property_price_from_html(sample_redfin_text) == 575_063.0

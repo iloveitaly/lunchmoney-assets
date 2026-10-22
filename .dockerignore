@@ -1,0 +1,14 @@
+.git
+**/__pycache__
+**/*.py[cod]
+.venv
+.env
+.envrc
+*.egg-info
+tmp/
+playground/
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
