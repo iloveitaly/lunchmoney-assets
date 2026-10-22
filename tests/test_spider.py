@@ -1,17 +1,21 @@
+import pytest
+
 from scrapers import FirecrawlScraper, SpiderScraper, build_scraper
 from scrapers.base import Scraper
 from scrapers.spider import _extract_property_price_from_html
 
 
 def test_spider_implements_protocol():
-    scraper = SpiderScraper()
+    scraper = SpiderScraper(api_key="test-key")
     assert isinstance(scraper, Scraper)
 
 
 def test_build_scraper_selection(monkeypatch):
+    monkeypatch.setenv("SPIDER_API_KEY", "test-spider-key")
     monkeypatch.setenv("SCRAPER_BACKEND", "spider")
     assert isinstance(build_scraper(), SpiderScraper)
 
+    monkeypatch.setenv("FIRECRAWL_KEY", "test-firecrawl-key")
     monkeypatch.setenv("SCRAPER_BACKEND", "firecrawl")
     assert isinstance(build_scraper(), FirecrawlScraper)
 
@@ -22,9 +26,24 @@ def test_build_scraper_auto_detect(monkeypatch):
     assert isinstance(build_scraper(), SpiderScraper)
 
 
-def test_firecrawl_scraper_missing_key(monkeypatch):
-    import pytest
+def test_build_scraper_missing_both_keys(monkeypatch):
+    monkeypatch.delenv("SCRAPER_BACKEND", raising=False)
+    monkeypatch.delenv("SPIDER_API_KEY", raising=False)
+    monkeypatch.delenv("FIRECRAWL_KEY", raising=False)
 
+    with pytest.raises(
+        ValueError, match="Neither SPIDER_API_KEY nor FIRECRAWL_KEY is set"
+    ):
+        build_scraper()
+
+
+def test_spider_scraper_missing_key(monkeypatch):
+    monkeypatch.delenv("SPIDER_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="SPIDER_API_KEY is required"):
+        SpiderScraper()
+
+
+def test_firecrawl_scraper_missing_key(monkeypatch):
     monkeypatch.delenv("FIRECRAWL_KEY", raising=False)
     with pytest.raises(ValueError, match="FIRECRAWL_KEY is required"):
         FirecrawlScraper()

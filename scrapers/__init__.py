@@ -6,6 +6,14 @@ from .spider import SpiderScraper
 
 
 def build_scraper() -> Scraper:
+    spider_key = config("SPIDER_API_KEY", default=None)
+    firecrawl_key = config("FIRECRAWL_KEY", default=None)
+
+    if not spider_key and not firecrawl_key:
+        raise ValueError(
+            "Neither SPIDER_API_KEY nor FIRECRAWL_KEY is set. At least one scraper API key is required."
+        )
+
     backend = config("SCRAPER_BACKEND", default=None)
     if backend:
         backend = backend.lower()
@@ -15,7 +23,7 @@ def build_scraper() -> Scraper:
             return FirecrawlScraper()
         raise ValueError(f"Unknown scraper backend: {backend}")
 
-    if config("SPIDER_API_KEY", default=None):
+    if spider_key:
         return SpiderScraper()
     return FirecrawlScraper()
 

@@ -26,9 +26,13 @@ class SpiderScraper:
 
     def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key or config("SPIDER_API_KEY", default=None)
-        self._headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            self._headers["Authorization"] = f"Bearer {self.api_key}"
+        if not self.api_key:
+            raise ValueError("SPIDER_API_KEY is required when using SpiderScraper.")
+
+        self._headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
 
     def _post(self, endpoint: str, payload: dict[str, Any], timeout: float = 60.0) -> list[dict]:
         url = f"{SPIDER_API_BASE}{endpoint}"
