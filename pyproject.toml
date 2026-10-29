@@ -1,6 +1,6 @@
 [project]
 name = "lunchmoney-assets"
-version = "0.1.0"
+version = "1.0.1"
 description = "Automatically update LunchMoney asset balances by scraping real estate and vehicle valuations."
 readme = "README.md"
 keywords = ["lunchmoney", "firecrawl", "scraping", "assets"]
